@@ -59,18 +59,27 @@ contract PredictionMarket is Ownable {
             noTokenSymbol
         );
 
+        string memory LPTokenName = string(abi.encodePacked("LPToken", Strings.toString(predictionGameCount)));
+        string memory LPTokenSymbol = string(abi.encodePacked("LP", Strings.toString(predictionGameCount)));
+        ERC20Basic LPToken = new ERC20Basic(
+            LPTokenName,
+            LPTokenSymbol
+        );
+
         // 2. Create new `PredictionGame` smart contract
         PredictionGame newPredictionGame = new PredictionGame(
             msg.sender,
             _side,
             _expiryTime,
             address(yesToken),
-            address(noToken)
+            address(noToken),
+            address(LPToken)
         );
         predictionMarketRegistry[predictionGameCount] = address(newPredictionGame);
         // Transfer ownership of the tokens to the game
         yesToken.transferOwnership(address(newPredictionGame));
         noToken.transferOwnership(address(newPredictionGame));
+        LPToken.transferOwnership(address(newPredictionGame));
 
         emit PredictionGameCreated(
             predictionGameCount,

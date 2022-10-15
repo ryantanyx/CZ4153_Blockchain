@@ -31,17 +31,16 @@ contract PredictionGame{ //is VRFConsumerBase {
     uint256 public expiryTime;
     address public yesTokenAddress;
     address public noTokenAddress;
-
-    // address public depositTokenAddress;
-    // address priceConverterAddress;
-    // address public winner;
-    // bool public isWithdrawn;
+    address public liquidityTokenAddress;
     Result public result;
+
+    uint256 public invariant;
+    bool public initialLiquidityProvided;
+    uint256 public liquidity;
 
     mapping(Side => uint) public bets;
     mapping(address => mapping(Side => uint256)) public betsOfAllPlayers;
-    // mapping(bytes32 => address) requestIdToAddressRegistry;
-    
+
     constructor(
         // address _vrfCoordinatorAddress,
         // address _linkTokenAddress,
@@ -51,7 +50,8 @@ contract PredictionGame{ //is VRFConsumerBase {
         Side _sides,
         uint256 _expiryTime,
         address _yesTokenAddress,
-        address _noTokenAddress
+        address _noTokenAddress,
+        address _liquidityTokenAddress
         // address _priceConverterAddress
     ){
         creator = _creator;
@@ -60,8 +60,10 @@ contract PredictionGame{ //is VRFConsumerBase {
         expiryTime = _expiryTime;
         yesTokenAddress = _yesTokenAddress;
         noTokenAddress = _noTokenAddress;
-        // priceConverterAddress = _priceConverterAddress;
-        // depositTokenAddress = address(0);
+        liquidityTokenAddress = _liquidityTokenAddress;
+
+        initialLiquidityProvided = false;
+        liquidity = 0;
     }
 
     /**
@@ -97,6 +99,18 @@ contract PredictionGame{ //is VRFConsumerBase {
         _;
     }
 
+    /**
+     * Makes sure that initial liquidity is / not already initialised
+     */
+    modifier liquidityInitialised(bool initialised) {
+        if (initialised) {
+            require(initialLiquidityProvided == true, "Initial liquidity not yet provided!");
+        } else {
+            require(initialLiquidityProvided == false, "Initial liquidity already provided!");
+        }
+        _;
+    }
+
     // modifier onlyNotWithdrawn() {
     //     require(isWithdrawn == false, "The fund in this game has been withdrawn!");
     //     _;
@@ -109,6 +123,32 @@ contract PredictionGame{ //is VRFConsumerBase {
     //     require(msg.sender == winner, "You are not the winner of this game!");
     //     _;
     // }
+
+    /**
+     *  Add initial liquidity to the prediction game
+     */
+    function initialiseLiquidity() 
+        public payable
+        liquidityInitialised(false)
+    {
+        // Mint the tokens to inventory
+        ERC20Basic yesToken = ERC20Basic(yesTokenAddress);
+        ERC20Basic noToken = ERC20Basic(noTokenAddress);
+        yesToken.mint(address(this), msg.value);
+        noToken.mint(address(this), msg.value);
+
+        // Calculate invariant
+        invariant = SafeMath.mul(msg.value, msg.value);
+
+        // Update liquidity pool
+        liquidity = msg.value;
+        initialLiquidityProvided = true;
+
+        // Mint and transfer LP Tokens to liquidity provider
+        ERC20Basic LPToken = ERC20Basic(liquidityTokenAddress);
+        LPToken.mint(address(this), 100);   // Initial LP receives 100 LP tokens
+        LPToken.transfer(msg.sender, 100);
+    }
 
     /**
      * Get Betting Game all public info
