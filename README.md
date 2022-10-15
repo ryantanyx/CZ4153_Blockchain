@@ -49,9 +49,11 @@ $ truffle migrate
 $ truffle console
 truffle(development)> let ins = await PredictionMarket.deployed()
 truffle(development)> const myE = {A:0, B:1}
-truffle(development)> ins.createGame(1000, myE.A)
-truffle(development)> ins.getPredictionGameById(0)		// use this address for next line, shouldnt be all zeros
+truffle(development)> ins.createGame(myE.A, 1675822306)
+truffle(development)> ins.predictionMarketRegistry(0)		// use this address for next line, shouldnt be all zeros
 truffle(development)> game = await PredictionGame.at('0x6515B25dC446746B33e42B7dbB7739E13dDAF6cc')	// See above in-line comment 
+truffle(development)> game.placeBet(myE.A, { value: 10000000000000000000 })
+truffle(development)> game.yesTokenAddress
 truffle(development)> game.getBettingGameInfo()
 ```
 
