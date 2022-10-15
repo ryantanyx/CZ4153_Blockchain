@@ -5,7 +5,7 @@ import "../node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import "../node_modules/@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./interfaces/IERC20Burnable.sol";
-// import "../interfaces/IPriceConverter.sol";
+import "./ERC20Basic.sol";
 import "./enums/Side.sol";
 
 contract PredictionGame{ //is VRFConsumerBase {
@@ -13,34 +13,41 @@ contract PredictionGame{ //is VRFConsumerBase {
     using SafeERC20 for IERC20;
 
     enum PredictionGameStatus { OPEN, CLOSED }
-    // enum Side { A, B }
+
     struct Result {
-        Side winner;
-        Side loser;
+        SideEnum winner;
+        SideEnum loser;
     }
 
     event Challenge(address challenger);
     event Play(address playerAddress, uint256 randomResult);
     event Deposit(address tokenAddress, uint256 tokenAmount);
     event Withdraw(address winner, address tokenAddress, uint256 tokenAmount);
+    event TokenCreated(uint256 value);
 
     bytes32 internal keyHash;
     uint256 internal fee;
     address public creator;
     address public challenger;
-    Side public sides;
+    // Side[2] public sides;
     PredictionGameStatus public status;
     uint256 public expiryTime;
+    uint256 public createdTime;
     address public nativeTokenAddress;
     address public depositTokenAddress; // I think not required.
     // address priceConverterAddress;
     // address public winner;
     bool public isWithdrawn;
     Result public result;
+    ERC20Basic tokenA;
+    ERC20Basic tokenB;
+    uint256 private balance;
 
-    mapping(Side => uint) public bets;
+    mapping(SideEnum => uint256) tokenValues;
+    mapping(SideEnum => string) sideDetails;
+    mapping(SideEnum => uint) public bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
-    mapping(address => mapping(Side => uint256)) public betsOfAllPlayers; // need to change to nested mapping?
+    mapping(address => mapping(SideEnum => uint256)) public betsOfAllPlayers; // need to change to nested mapping?
 
     constructor(
         // address _vrfCoordinatorAddress,
@@ -48,20 +55,31 @@ contract PredictionGame{ //is VRFConsumerBase {
         // bytes32 _keyHash,
         // uint256 _fee,
         address _creator,
-        Side _sides,
+        string memory _sideA,
+        string memory _sideB,
+        uint256 _expiryTime,
+        // uint _value,
+        // SideEnum _chosenSide,
         address _nativeTokenAddress
         // address _priceConverterAddress
     ){
-        // keyHash = _keyHash;
-        // fee = _fee;
+        // createTokens(_value);
+        // placeBet(_chosenSide, creator, _value);
+        // balance = _valuse;
         creator = _creator;
         challenger = address(0);
-        sides = _sides;
+        sideDetails[SideEnum.A] = _sideA;
+        sideDetails[SideEnum.B] = _sideB;
         status = PredictionGameStatus.OPEN;
-        expiryTime = block.timestamp + 30 minutes;
+        expiryTime = _expiryTime;
+        createdTime = block.timestamp;
         nativeTokenAddress = _nativeTokenAddress;
-        // priceConverterAddress = _priceConverterAddress;
         depositTokenAddress = address(0);
+        
+        // keyHash = _keyHash;
+        // fee = _fee;
+        // priceConverterAddress = _priceConverterAddress;
+        
     }
 
     /**
@@ -75,6 +93,8 @@ contract PredictionGame{ //is VRFConsumerBase {
         }
         _;
     }
+
+    
 
     /**
      * Making sure that this game has either expired or not (depends on `isExpired`)
@@ -106,7 +126,7 @@ contract PredictionGame{ //is VRFConsumerBase {
     // }
 
     /**
-     * Get Betting Game all public info
+     * Get Prediction Game all public info
      */
     function getBettingGameInfo()
         public
@@ -114,23 +134,29 @@ contract PredictionGame{ //is VRFConsumerBase {
         returns (
             address,
             // address,
-            Side,
+            string memory,
+            string memory,
             PredictionGameStatus,
             uint256,
-            address,
-            Side,
+            uint256,
+            uint256,
+            uint256,
+            // address,
+            SideEnum,
             bool
-            // uint256,
-            // uint256
         )
     {
         return (
             creator,
             // challenger,
-            sides,
+            sideDetails[SideEnum.A],
+            sideDetails[SideEnum.B],
             status,
             expiryTime,
-            depositTokenAddress,
+            tokenValues[SideEnum.A],
+            betsOfAllPlayers[creator][SideEnum.A],
+            betsOfAllPlayers[creator][SideEnum.B],
+            // depositTokenAddress,
             result.winner,
             isWithdrawn
             // playerPredictionRecordRegistry[creator], //supposed to return 
@@ -138,7 +164,15 @@ contract PredictionGame{ //is VRFConsumerBase {
         );
     }
 
-    function challenge(Side _side)
+    function getBetsOfAllPlayers(address _address) public view
+        returns (uint256, uint256) {
+        return (
+            betsOfAllPlayers[_address][SideEnum.A],
+            betsOfAllPlayers[_address][SideEnum.B]
+        );
+    }
+
+    function challenge(SideEnum _side)
         public
         onlyCreator(false)
         onlyExpiredGame(false)
@@ -162,7 +196,8 @@ contract PredictionGame{ //is VRFConsumerBase {
     /**
      * Allow player `_msgSend` to place a bet on the game
      */
-    function placeBet(Side _side)
+     
+    function placeBet(SideEnum _side)
         public payable
         onlyExpiredGame(false)
     {
@@ -172,11 +207,29 @@ contract PredictionGame{ //is VRFConsumerBase {
         // );
         // requestId = requestRandomness(keyHash, fee);
         // requestIdToAddressRegistry[requestId] = msg.sender;
+        balance += msg.value;
 
         bets[_side] += msg.value;
-        betsOfAllPlayers[msg.sender][_side] += msg.value;
+        betsOfAllPlayers[msg.sender][_side] += msg.value;   
+    }
+
+    function createTokens() public payable {
+        tokenValues[SideEnum.A] += msg.value;
+        tokenValues[SideEnum.B] += msg.value;
+        emit TokenCreated(msg.value);
+    }
+
+    function placeBet(SideEnum _side, address _sender, uint256 _value)
+        public 
+        onlyExpiredGame(false)
+    {
+        balance += _value;
+
+        bets[_side] += _value;
+        betsOfAllPlayers[_sender][_side] += _value;
         
     }
+
 
     function deposit(
         address _tokenAddress
@@ -205,8 +258,8 @@ contract PredictionGame{ //is VRFConsumerBase {
         uint gamblerBet = betsOfAllPlayers[msg.sender][result.winner];
         require(gamblerBet > 0, "You did not bet on this side!");
         uint gain = gamblerBet + bets[result.loser] * gamblerBet / bets[result.winner];
-        betsOfAllPlayers[msg.sender][Side.A] = 0;
-        betsOfAllPlayers[msg.sender][Side.B] = 0;
+        betsOfAllPlayers[msg.sender][SideEnum.A] = 0;
+        betsOfAllPlayers[msg.sender][SideEnum.B] = 0;
         // msg.sender.transfer(gain);
 
         IERC20 token = IERC20(depositTokenAddress);

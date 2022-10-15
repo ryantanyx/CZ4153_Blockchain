@@ -13,12 +13,19 @@ contract PredictionMarket is Ownable {
     using SafeERC20 for IERC20;
     using SafeERC20 for IERC20Burnable;
 
-    // enum Side { A, B }
+    
+
+    struct Payload {
+        string sideADetails;
+        string sideBDetails;
+        uint expiryTime;
+        SideEnum chosenSide;
+    }
 
     event PredictionGameCreated(
         uint256 predictionGameId,
         address creator,
-        Side sides,
+        Payload payload,
         address predictionGameAddress
     );
 
@@ -65,24 +72,32 @@ contract PredictionMarket is Ownable {
     /**
      * Create new `PredictionGame` instance
      */
-    function createGame(uint256 value, Side _side) public {
+    function createGame(Payload memory payload) public payable{
         // 1. Burn some token
         // IERC20Burnable nativeToken = IERC20Burnable(nativeTokenAddress);
-        // uint256 burnPrice = SafeMath.mul(0.01 * 10**18, value);        // how to determine the amt creator puts in
+        // uint256 burnPrice = SafeMath.mul(0.01 * 10**18, msg.value);        // how to determine the amt creator puts in
         // nativeToken.burnFrom(msg.sender, burnPrice);
 
         // 2. Create new `PredictionGame` smart contract
+        // uint256 value = msg.value;
         PredictionGame newPredictionGame = new PredictionGame(
             msg.sender,
-            _side,
+            payload.sideADetails,
+            payload.sideBDetails,
+            payload.expiryTime,
+            // msg.value,
+            // payload.chosenSide,
             nativeTokenAddress
         );
+        newPredictionGame.createTokens();
+        newPredictionGame.placeBet(payload.chosenSide);
+        
         predictionMarketRegistry[predictionGameCount] = address(newPredictionGame);
 
         emit PredictionGameCreated(
             predictionGameCount,
             msg.sender,
-            _side,
+            payload,
             address(newPredictionGame)
         );
 

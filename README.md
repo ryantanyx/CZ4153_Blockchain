@@ -48,8 +48,8 @@ $ truffle migrate
 ```sh
 $ truffle console
 truffle(development)> let ins = await PredictionMarket.deployed()
-truffle(development)> const myE = {A:0, B:1}
-truffle(development)> ins.createGame(1000, myE.A)
+truffle(development)> const myE = {A:0, B:1}; const pl = {sideADetails:"test A", sideBDetails: "testB", expiryTime: 1665899999, chosenSide : myE.A}; const msg = {from: "0xbE4874f8D8dB230ebBDEA9d720772FF9a40DE493", value: web3.utils.toWei('0.12')};
+truffle(development)> ins.createGame(pl, msg)
 truffle(development)> ins.getPredictionGameById(0)		// use this address for next line, shouldnt be all zeros
 truffle(development)> game = await PredictionGame.at('0x6515B25dC446746B33e42B7dbB7739E13dDAF6cc')	// See above in-line comment 
 truffle(development)> game.getBettingGameInfo()
