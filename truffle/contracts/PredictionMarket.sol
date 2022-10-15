@@ -68,6 +68,9 @@ contract PredictionMarket is Ownable {
             address(noToken)
         );
         predictionMarketRegistry[predictionGameCount] = address(newPredictionGame);
+        // Transfer ownership of the tokens to the game
+        yesToken.transferOwnership(address(newPredictionGame));
+        noToken.transferOwnership(address(newPredictionGame));
 
         emit PredictionGameCreated(
             predictionGameCount,

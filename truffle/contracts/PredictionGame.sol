@@ -6,6 +6,7 @@ import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import "../node_modules/@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./interfaces/IERC20Burnable.sol";
 // import "../interfaces/IPriceConverter.sol";
+import "./ERC20Basic.sol";
 import "./enums/Side.sol";
 
 contract PredictionGame{ //is VRFConsumerBase {
@@ -31,15 +32,16 @@ contract PredictionGame{ //is VRFConsumerBase {
     address public nativeTokenAddress;
     address public yesTokenAddress;
     address public noTokenAddress;
+
     // address public depositTokenAddress;
     // address priceConverterAddress;
     // address public winner;
-    bool public isWithdrawn;
+    // bool public isWithdrawn;
     Result public result;
 
     mapping(Side => uint) public bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
-    mapping(address => mapping(Side => uint256)) public betsOfAllPlayers; // need to change to nested mapping?
+    mapping(address => mapping(Side => uint256)) public betsOfAllPlayers;
 
     constructor(
         // address _vrfCoordinatorAddress,
@@ -94,10 +96,10 @@ contract PredictionGame{ //is VRFConsumerBase {
         _;
     }
 
-    modifier onlyNotWithdrawn() {
-        require(isWithdrawn == false, "The fund in this game has been withdrawn!");
-        _;
-    }
+    // modifier onlyNotWithdrawn() {
+    //     require(isWithdrawn == false, "The fund in this game has been withdrawn!");
+    //     _;
+    // }
 
     /**
      * Making sure that the function has only access to the winner
@@ -119,8 +121,8 @@ contract PredictionGame{ //is VRFConsumerBase {
             Side,
             PredictionGameStatus,
             uint256,
-            Side,
-            bool
+            Side
+            // bool
             // uint256,
             // uint256
         )
@@ -131,8 +133,8 @@ contract PredictionGame{ //is VRFConsumerBase {
             sides,
             status,
             expiryTime,
-            result.winner,
-            isWithdrawn
+            result.winner
+            // isWithdrawn
             // playerPredictionRecordRegistry[creator], //supposed to return 
             // playerPredictionRecordRegistry[challenger]
         );
@@ -160,22 +162,22 @@ contract PredictionGame{ //is VRFConsumerBase {
     }
 
     /**
-     * Allow player `_msgSend` to place a bet on the game
+     * Allow player to place a bet on the game
      */
     function placeBet(Side _side)
         public payable
         onlyExpiredGame(false)
     {
-        // require(
-        //     LINK.balanceOf(address(this)) >= fee,
-        //     "Not enough LINK - fill contract with faucet"
-        // );
-        // requestId = requestRandomness(keyHash, fee);
-        // requestIdToAddressRegistry[requestId] = msg.sender;
-
-        bets[_side] += msg.value;
-        betsOfAllPlayers[msg.sender][_side] += msg.value;
+        bets[_side] += msg.value;                               // Update the bet value on that side
+        betsOfAllPlayers[msg.sender][_side] += msg.value;       // Update the bet value for the player
         
+        // Mint the tokens
+        ERC20Basic yesToken = ERC20Basic(yesTokenAddress);
+        ERC20Basic noToken = ERC20Basic(noTokenAddress);
+        yesToken.mint(address(this), msg.value);
+        noToken.mint(address(this), msg.value);
+
+        // TODO: transfer the appropriate amount of tokens to the player
     }
 
     // function deposit(

@@ -12,7 +12,7 @@ contract ERC20Basic is ERC20, ERC20Burnable, Ownable {
     /**
      * Public minting function (for testing purposes)
      */
-    function mint(address to, uint256 amount) public {
+    function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
     }
 }
