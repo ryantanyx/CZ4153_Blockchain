@@ -24,15 +24,14 @@ contract PredictionGame{ //is VRFConsumerBase {
     event Deposit(address tokenAddress, uint256 tokenAmount);
     event Withdraw(address winner, address tokenAddress, uint256 tokenAmount);
 
-    bytes32 internal keyHash;
-    uint256 internal fee;
     address public creator;
-    address public challenger;
     Side public sides;
     PredictionGameStatus public status;
     uint256 public expiryTime;
     address public nativeTokenAddress;
-    address public depositTokenAddress; // I think not required.
+    address public yesTokenAddress;
+    address public noTokenAddress;
+    // address public depositTokenAddress;
     // address priceConverterAddress;
     // address public winner;
     bool public isWithdrawn;
@@ -49,19 +48,22 @@ contract PredictionGame{ //is VRFConsumerBase {
         // uint256 _fee,
         address _creator,
         Side _sides,
-        address _nativeTokenAddress
+        uint256 _expiryTime,
+        address _yesTokenAddress,
+        address _noTokenAddress
         // address _priceConverterAddress
     ){
         // keyHash = _keyHash;
         // fee = _fee;
         creator = _creator;
-        challenger = address(0);
         sides = _sides;
         status = PredictionGameStatus.OPEN;
-        expiryTime = block.timestamp + 30 minutes;
-        nativeTokenAddress = _nativeTokenAddress;
+        // expiryTime = block.timestamp + 30 minutes;
+        expiryTime = _expiryTime;
+        yesTokenAddress = _yesTokenAddress;
+        noTokenAddress = _noTokenAddress;
         // priceConverterAddress = _priceConverterAddress;
-        depositTokenAddress = address(0);
+        // depositTokenAddress = address(0);
     }
 
     /**
@@ -117,7 +119,6 @@ contract PredictionGame{ //is VRFConsumerBase {
             Side,
             PredictionGameStatus,
             uint256,
-            address,
             Side,
             bool
             // uint256,
@@ -130,7 +131,6 @@ contract PredictionGame{ //is VRFConsumerBase {
             sides,
             status,
             expiryTime,
-            depositTokenAddress,
             result.winner,
             isWithdrawn
             // playerPredictionRecordRegistry[creator], //supposed to return 
@@ -138,19 +138,19 @@ contract PredictionGame{ //is VRFConsumerBase {
         );
     }
 
-    function challenge(Side _side)
-        public
-        onlyCreator(false)
-        onlyExpiredGame(false)
-    {
-        IERC20Burnable nativeToken = IERC20Burnable(nativeTokenAddress);
-        uint256 burnPrice = SafeMath.mul(0.01 * 10**18, betsOfAllPlayers[msg.sender][_side]);
-        nativeToken.burnFrom(msg.sender, burnPrice);
+    // function challenge(Side _side)
+    //     public
+    //     onlyCreator(false)
+    //     onlyExpiredGame(false)
+    // {
+    //     IERC20Burnable nativeToken = IERC20Burnable(nativeTokenAddress);
+    //     uint256 burnPrice = SafeMath.mul(0.01 * 10**18, betsOfAllPlayers[msg.sender][_side]);
+    //     nativeToken.burnFrom(msg.sender, burnPrice);
 
-        challenger = msg.sender;
+    //     challenger = msg.sender;
 
-        emit Challenge(msg.sender);
-    }
+    //     emit Challenge(msg.sender);
+    // }
 
     /**
      *  Cancel the created Betting Game
@@ -178,43 +178,43 @@ contract PredictionGame{ //is VRFConsumerBase {
         
     }
 
-    function deposit(
-        address _tokenAddress
-        // address _baseAddress,
-        // address _quoteAddress
-    ) public onlyExpiredGame(false) {
+    // function deposit(
+    //     address _tokenAddress
+    //     // address _baseAddress,
+    //     // address _quoteAddress
+    // ) public onlyExpiredGame(false) {
 
-        IERC20 token = IERC20(_tokenAddress);
-        // How to derive the token amount???
-        // uint256 tokenAmount = SafeMath.div(SafeMath.mul(uint256(price), betsOfAllPlayers[msg.sender][_side]), 100);
-        token.safeTransferFrom(msg.sender, address(this), 0);
+    //     IERC20 token = IERC20(_tokenAddress);
+    //     // How to derive the token amount???
+    //     // uint256 tokenAmount = SafeMath.div(SafeMath.mul(uint256(price), betsOfAllPlayers[msg.sender][_side]), 100);
+    //     token.safeTransferFrom(msg.sender, address(this), 0);
 
-        if (depositTokenAddress == address(0)) {
-            depositTokenAddress = _tokenAddress;
-        }
+    //     if (depositTokenAddress == address(0)) {
+    //         depositTokenAddress = _tokenAddress;
+    //     }
 
-        emit Deposit(_tokenAddress, 0);
-    }
+    //     emit Deposit(_tokenAddress, 0);
+    // }
 
-    function withdraw()
-        public
-        onlyExpiredGame(true)
-        // onlyWinner
-        onlyNotWithdrawn
-    {
-        uint gamblerBet = betsOfAllPlayers[msg.sender][result.winner];
-        require(gamblerBet > 0, "You did not bet on this side!");
-        uint gain = gamblerBet + bets[result.loser] * gamblerBet / bets[result.winner];
-        betsOfAllPlayers[msg.sender][Side.A] = 0;
-        betsOfAllPlayers[msg.sender][Side.B] = 0;
-        // msg.sender.transfer(gain);
+    // function withdraw()
+    //     public
+    //     onlyExpiredGame(true)
+    //     // onlyWinner
+    //     onlyNotWithdrawn
+    // {
+    //     uint gamblerBet = betsOfAllPlayers[msg.sender][result.winner];
+    //     require(gamblerBet > 0, "You did not bet on this side!");
+    //     uint gain = gamblerBet + bets[result.loser] * gamblerBet / bets[result.winner];
+    //     betsOfAllPlayers[msg.sender][Side.A] = 0;
+    //     betsOfAllPlayers[msg.sender][Side.B] = 0;
+    //     // msg.sender.transfer(gain);
 
-        IERC20 token = IERC20(depositTokenAddress);
-        uint256 tokenAmount = token.balanceOf(address(this));
-        token.safeTransfer(msg.sender, tokenAmount);
+    //     IERC20 token = IERC20(depositTokenAddress);
+    //     uint256 tokenAmount = token.balanceOf(address(this));
+    //     token.safeTransfer(msg.sender, tokenAmount);
 
-        emit Withdraw(msg.sender, depositTokenAddress, 0);
+    //     emit Withdraw(msg.sender, depositTokenAddress, 0);
 
-        isWithdrawn = true;
-    }
+    //     isWithdrawn = true;
+    // }
 }
