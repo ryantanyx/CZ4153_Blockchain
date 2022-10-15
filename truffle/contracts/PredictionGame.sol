@@ -14,34 +14,40 @@ contract PredictionGame{ //is VRFConsumerBase {
     using SafeERC20 for IERC20;
 
     enum PredictionGameStatus { OPEN, CLOSED }
+    enum sides {A, B}
     // enum Side { A, B }
-    struct Result {
-        Side winner;
-        Side loser;
-    }
+    // struct Result {
+    //     Side winner;
+    //     Side loser;
+    // }
 
     event Challenge(address challenger);
     event Play(address playerAddress, uint256 randomResult);
     event Deposit(address tokenAddress, uint256 tokenAmount);
     event Withdraw(address winner, address tokenAddress, uint256 tokenAmount);
 
+    string public betTitle;
+    string[] choices;
+    uint public constant K = 100 * 10**12; //CPMM k constant
+
     address public creator;
-    Side public sides;
+    // Side public sides;
     PredictionGameStatus public status;
     uint256 public expiryTime;
     address public nativeTokenAddress;
     address public yesTokenAddress;
     address public noTokenAddress;
-
     // address public depositTokenAddress;
     // address priceConverterAddress;
     // address public winner;
     // bool public isWithdrawn;
-    Result public result;
+    // Result public result;
 
-    mapping(Side => uint) public bets;
+    mapping(string => sides) public sidesMap;
+    mapping(sides => uint) public bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
-    mapping(address => mapping(Side => uint256)) public betsOfAllPlayers;
+    mapping(address => mapping(sides => uint256)) public betsOfAllPlayers;
+    mapping(sides => uint) internalTokenCounts;     //for CPMM, initialized to 10 * 10^6 each
 
     constructor(
         // address _vrfCoordinatorAddress,
@@ -52,18 +58,28 @@ contract PredictionGame{ //is VRFConsumerBase {
         Side _sides,
         uint256 _expiryTime,
         address _yesTokenAddress,
-        address _noTokenAddress
+        address _noTokenAddress,
         // address _priceConverterAddress
+        string memory _betTitle,
+        string memory _choiceA,
+        string memory _choiceB
     ){
         // keyHash = _keyHash;
         // fee = _fee;
         creator = _creator;
-        sides = _sides;
+        //sides = _sides;
         status = PredictionGameStatus.OPEN;
         // expiryTime = block.timestamp + 30 minutes;
         expiryTime = _expiryTime;
         yesTokenAddress = _yesTokenAddress;
         noTokenAddress = _noTokenAddress;
+        betTitle = _betTitle;
+        sidesMap[_choiceA] = sides.A;
+        choices.push(_choiceA);
+        sidesMap[_choiceB] = sides.B;
+        choices.push(_choiceB);
+        internalTokenCounts[sides.A] += 10 * 10**6;
+        internalTokenCounts[sides.B] += 10 * 10**6;
         // priceConverterAddress = _priceConverterAddress;
         // depositTokenAddress = address(0);
     }
@@ -110,6 +126,41 @@ contract PredictionGame{ //is VRFConsumerBase {
     // }
 
     /**
+     * Print choices in game
+     */
+    function getChoices()
+        public
+        view
+        returns (
+            string[] memory entries
+        )
+    {
+        return (
+            choices
+        );
+    }
+
+    function seeInternalTokensA()
+        public
+        view
+        returns (
+            uint
+        )
+    {
+        return internalTokenCounts[sides.A];
+    }
+
+    function seeInternalTokensB()
+        public
+        view
+        returns (
+            uint
+        )
+    {
+        return internalTokenCounts[sides.B];
+    }
+
+    /**
      * Get Betting Game all public info
      */
     function getBettingGameInfo()
@@ -118,10 +169,10 @@ contract PredictionGame{ //is VRFConsumerBase {
         returns (
             address,
             // address,
-            Side,
+            // Side,
             PredictionGameStatus,
-            uint256,
-            Side
+            uint256
+            // Side
             // bool
             // uint256,
             // uint256
@@ -130,10 +181,10 @@ contract PredictionGame{ //is VRFConsumerBase {
         return (
             creator,
             // challenger,
-            sides,
+            // sides,
             status,
-            expiryTime,
-            result.winner
+            expiryTime
+            // result.winner
             // isWithdrawn
             // playerPredictionRecordRegistry[creator], //supposed to return 
             // playerPredictionRecordRegistry[challenger]
@@ -164,12 +215,16 @@ contract PredictionGame{ //is VRFConsumerBase {
     /**
      * Allow player to place a bet on the game
      */
-    function placeBet(Side _side)
+    function placeBet(string memory choice)
         public payable
-        onlyExpiredGame(false)
-    {
-        bets[_side] += msg.value;                               // Update the bet value on that side
-        betsOfAllPlayers[msg.sender][_side] += msg.value;       // Update the bet value for the player
+        // onlyExpiredGame(false)
+    {   
+        sides side = sidesMap[choice];
+        bets[side] += msg.value;                               // Update the bet value on that side
+        betsOfAllPlayers[msg.sender][side] += msg.value;       // Update the bet value for the player
+
+        //call CPMM
+        uint togive = CPMM(10, side); //10 is test value
         
         // Mint the tokens
         ERC20Basic yesToken = ERC20Basic(yesTokenAddress);
@@ -178,6 +233,28 @@ contract PredictionGame{ //is VRFConsumerBase {
         noToken.mint(address(this), msg.value);
 
         // TODO: transfer the appropriate amount of tokens to the player
+    }
+
+    // constant product market maker
+    function CPMM(uint value, sides betSide)
+        private
+        returns (uint)
+    {
+        uint togive;
+        internalTokenCounts[sides.A] += (value * 10**6);
+        internalTokenCounts[sides.B] += (value * 10**6);
+        uint newProduct = internalTokenCounts[sides.A] * internalTokenCounts[sides.B];
+
+        if (betSide == sides.A) {
+            togive = (newProduct - K) / internalTokenCounts[sides.B];
+            internalTokenCounts[sides.A] -= togive;
+        }
+        else {
+            togive = (newProduct - K) / internalTokenCounts[sides.A];
+            internalTokenCounts[sides.B] -= togive;
+        }
+
+        return togive;
     }
 
     // function deposit(
