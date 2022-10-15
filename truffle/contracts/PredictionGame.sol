@@ -14,7 +14,7 @@ contract PredictionGame{ //is VRFConsumerBase {
     using SafeERC20 for IERC20;
 
     enum PredictionGameStatus { OPEN, CLOSED }
-    // enum Side { A, B }
+
     struct Result {
         Side winner;
         Side loser;
@@ -29,7 +29,6 @@ contract PredictionGame{ //is VRFConsumerBase {
     Side public sides;
     PredictionGameStatus public status;
     uint256 public expiryTime;
-    address public nativeTokenAddress;
     address public yesTokenAddress;
     address public noTokenAddress;
 
@@ -40,9 +39,9 @@ contract PredictionGame{ //is VRFConsumerBase {
     Result public result;
 
     mapping(Side => uint) public bets;
-    mapping(bytes32 => address) requestIdToAddressRegistry;
     mapping(address => mapping(Side => uint256)) public betsOfAllPlayers;
-
+    // mapping(bytes32 => address) requestIdToAddressRegistry;
+    
     constructor(
         // address _vrfCoordinatorAddress,
         // address _linkTokenAddress,
@@ -55,12 +54,9 @@ contract PredictionGame{ //is VRFConsumerBase {
         address _noTokenAddress
         // address _priceConverterAddress
     ){
-        // keyHash = _keyHash;
-        // fee = _fee;
         creator = _creator;
         sides = _sides;
         status = PredictionGameStatus.OPEN;
-        // expiryTime = block.timestamp + 30 minutes;
         expiryTime = _expiryTime;
         yesTokenAddress = _yesTokenAddress;
         noTokenAddress = _noTokenAddress;
@@ -84,8 +80,13 @@ contract PredictionGame{ //is VRFConsumerBase {
      * Making sure that this game has either expired or not (depends on `isExpired`)
      */
     modifier onlyExpiredGame(bool isExpired) {
+        // Update PredictionGameStatus to CLOSED if expiryTime is reached
+        if (block.timestamp >= expiryTime) {
+            status = PredictionGameStatus.CLOSED;
+        }
+
         if (isExpired) {
-            require(block.timestamp >= expiryTime || status == PredictionGameStatus.CLOSED, 
+            require(status == PredictionGameStatus.CLOSED, 
                 "This game has not expired!"
             );
         } else {
