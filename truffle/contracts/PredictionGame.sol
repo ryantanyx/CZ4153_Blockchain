@@ -28,7 +28,7 @@ contract PredictionGame{ //is VRFConsumerBase {
 
     string public betTitle;
     string[] choices;
-    uint public constant K = 100 * 10**12; //CPMM k constant
+    uint public constant K = 100 * 10**18; //CPMM k constant
 
     address public creator;
     // Side public sides;
@@ -241,17 +241,17 @@ contract PredictionGame{ //is VRFConsumerBase {
         returns (uint)
     {
         uint togive;
-        internalTokenCounts[sides.A] += (value * 10**6);
-        internalTokenCounts[sides.B] += (value * 10**6);
-        uint newProduct = internalTokenCounts[sides.A] * internalTokenCounts[sides.B];
+        internalTokenCounts[sides.A] = SafeMath.add(internalTokenCounts[sides.A], SafeMath.mul(value, 10**9));
+        internalTokenCounts[sides.B] = SafeMath.add(internalTokenCounts[sides.B], SafeMath.mul(value, 10**9));
+        uint newProduct = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]);
 
         if (betSide == sides.A) {
-            togive = (newProduct - K) / internalTokenCounts[sides.B];
-            internalTokenCounts[sides.A] -= togive;
+            togive = SafeMath.div(SafeMath.sub(newProduct, K), internalTokenCounts[sides.B]);
+            internalTokenCounts[sides.A] = SafeMath.sub(internalTokenCounts[sides.A], togive);
         }
         else {
-            togive = (newProduct - K) / internalTokenCounts[sides.A];
-            internalTokenCounts[sides.B] -= togive;
+            togive = SafeMath.div(SafeMath.sub(newProduct, K), internalTokenCounts[sides.A]);
+            internalTokenCounts[sides.B] = SafeMath.sub(internalTokenCounts[sides.B], togive);
         }
 
         return togive;
