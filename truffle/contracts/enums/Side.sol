@@ -1,12 +1,5 @@
 pragma solidity ^0.8.14;
 
-enum SideEnum {
-    A, B
+enum Side {
+    YES, NO
 }
-
-
-// struct Side{
-//     SideEnum side;
-//     string details;
-// }
-

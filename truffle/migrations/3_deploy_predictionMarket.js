@@ -3,6 +3,6 @@ const PredictionMarket = artifacts.require("PredictionMarket");
 
 
 module.exports = async function (deployer) {
-  const ERC20BasicInst = await ERC20Basic.deployed();
-  await deployer.deploy(PredictionMarket, ERC20BasicInst.address);
+  // const ERC20BasicInst = await ERC20Basic.deployed();
+  await deployer.deploy(PredictionMarket);
 };

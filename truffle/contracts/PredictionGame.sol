@@ -5,6 +5,7 @@ import "../node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import "../node_modules/@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./interfaces/IERC20Burnable.sol";
+// import "../interfaces/IPriceConverter.sol";
 import "./ERC20Basic.sol";
 import "./enums/Side.sol";
 
@@ -13,41 +14,39 @@ contract PredictionGame{ //is VRFConsumerBase {
     using SafeERC20 for IERC20;
 
     enum PredictionGameStatus { OPEN, CLOSED }
-
-    struct Result {
-        SideEnum winner;
-        SideEnum loser;
-    }
+    enum sides {A, B}
+    // enum Side { A, B }
+    // struct Result {
+    //     Side winner;
+    //     Side loser;
+    // }
 
     event Challenge(address challenger);
     event Play(address playerAddress, uint256 randomResult);
     event Deposit(address tokenAddress, uint256 tokenAmount);
     event Withdraw(address winner, address tokenAddress, uint256 tokenAmount);
-    event TokenCreated(uint256 value);
 
-    bytes32 internal keyHash;
-    uint256 internal fee;
+    string public betTitle;
+    string[] choices;
+    uint public constant K = 100 * 10**18; //CPMM k constant
+
     address public creator;
-    address public challenger;
-    // Side[2] public sides;
+    // Side public sides;
     PredictionGameStatus public status;
     uint256 public expiryTime;
-    uint256 public createdTime;
-    address public nativeTokenAddress;
-    address public depositTokenAddress; // I think not required.
+    address public yesTokenAddress;
+    address public noTokenAddress;
+    // address public depositTokenAddress;
     // address priceConverterAddress;
     // address public winner;
-    bool public isWithdrawn;
-    Result public result;
-    ERC20Basic tokenA;
-    ERC20Basic tokenB;
-    uint256 private balance;
+    // bool public isWithdrawn;
+    // Result public result;
 
-    mapping(SideEnum => uint256) tokenValues;
-    mapping(SideEnum => string) sideDetails;
-    mapping(SideEnum => uint) public bets;
+    mapping(string => sides) public sidesMap;
+    mapping(sides => uint) public bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
-    mapping(address => mapping(SideEnum => uint256)) public betsOfAllPlayers; // need to change to nested mapping?
+    mapping(address => mapping(sides => uint256)) public betsOfAllPlayers;
+    mapping(sides => uint) internalTokenCounts;     //for CPMM, initialized to 10 * 10^6 each
 
     constructor(
         // address _vrfCoordinatorAddress,
@@ -55,31 +54,30 @@ contract PredictionGame{ //is VRFConsumerBase {
         // bytes32 _keyHash,
         // uint256 _fee,
         address _creator,
-        string memory _sideA,
-        string memory _sideB,
+        Side _sides,
         uint256 _expiryTime,
-        // uint _value,
-        // SideEnum _chosenSide,
-        address _nativeTokenAddress
+        address _yesTokenAddress,
+        address _noTokenAddress,
         // address _priceConverterAddress
+        string memory _betTitle,
+        string memory _choiceA,
+        string memory _choiceB
     ){
-        // createTokens(_value);
-        // placeBet(_chosenSide, creator, _value);
-        // balance = _valuse;
         creator = _creator;
-        challenger = address(0);
-        sideDetails[SideEnum.A] = _sideA;
-        sideDetails[SideEnum.B] = _sideB;
+        //sides = _sides;
         status = PredictionGameStatus.OPEN;
         expiryTime = _expiryTime;
-        createdTime = block.timestamp;
-        nativeTokenAddress = _nativeTokenAddress;
-        depositTokenAddress = address(0);
-        
-        // keyHash = _keyHash;
-        // fee = _fee;
+        yesTokenAddress = _yesTokenAddress;
+        noTokenAddress = _noTokenAddress;
+        betTitle = _betTitle;
+        sidesMap[_choiceA] = sides.A;
+        choices.push(_choiceA);
+        sidesMap[_choiceB] = sides.B;
+        choices.push(_choiceB);
+        internalTokenCounts[sides.A] += 10 * 10**6;
+        internalTokenCounts[sides.B] += 10 * 10**6;
         // priceConverterAddress = _priceConverterAddress;
-        
+        // depositTokenAddress = address(0);
     }
 
     /**
@@ -94,14 +92,17 @@ contract PredictionGame{ //is VRFConsumerBase {
         _;
     }
 
-    
-
     /**
      * Making sure that this game has either expired or not (depends on `isExpired`)
      */
     modifier onlyExpiredGame(bool isExpired) {
+        // Update PredictionGameStatus to CLOSED if expiryTime is reached
+        if (block.timestamp >= expiryTime) {
+            status = PredictionGameStatus.CLOSED;
+        }
+
         if (isExpired) {
-            require(block.timestamp >= expiryTime || status == PredictionGameStatus.CLOSED, 
+            require(status == PredictionGameStatus.CLOSED, 
                 "This game has not expired!"
             );
         } else {
@@ -112,10 +113,10 @@ contract PredictionGame{ //is VRFConsumerBase {
         _;
     }
 
-    modifier onlyNotWithdrawn() {
-        require(isWithdrawn == false, "The fund in this game has been withdrawn!");
-        _;
-    }
+    // modifier onlyNotWithdrawn() {
+    //     require(isWithdrawn == false, "The fund in this game has been withdrawn!");
+    //     _;
+    // }
 
     /**
      * Making sure that the function has only access to the winner
@@ -126,7 +127,42 @@ contract PredictionGame{ //is VRFConsumerBase {
     // }
 
     /**
-     * Get Prediction Game all public info
+     * Print choices in game
+     */
+    function getChoices()
+        public
+        view
+        returns (
+            string[] memory entries
+        )
+    {
+        return (
+            choices
+        );
+    }
+
+    function seeInternalTokensA()
+        public
+        view
+        returns (
+            uint
+        )
+    {
+        return internalTokenCounts[sides.A];
+    }
+
+    function seeInternalTokensB()
+        public
+        view
+        returns (
+            uint
+        )
+    {
+        return internalTokenCounts[sides.B];
+    }
+
+    /**
+     * Get Betting Game all public info
      */
     function getBettingGameInfo()
         public
@@ -134,57 +170,41 @@ contract PredictionGame{ //is VRFConsumerBase {
         returns (
             address,
             // address,
-            string memory,
-            string memory,
+            // Side,
             PredictionGameStatus,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            // address,
-            SideEnum,
-            bool
+            uint256
+            // Side
+            // bool
+            // uint256,
+            // uint256
         )
     {
         return (
             creator,
             // challenger,
-            sideDetails[SideEnum.A],
-            sideDetails[SideEnum.B],
+            // sides,
             status,
-            expiryTime,
-            tokenValues[SideEnum.A],
-            betsOfAllPlayers[creator][SideEnum.A],
-            betsOfAllPlayers[creator][SideEnum.B],
-            // depositTokenAddress,
-            result.winner,
-            isWithdrawn
+            expiryTime
+            // result.winner
+            // isWithdrawn
             // playerPredictionRecordRegistry[creator], //supposed to return 
             // playerPredictionRecordRegistry[challenger]
         );
     }
 
-    function getBetsOfAllPlayers(address _address) public view
-        returns (uint256, uint256) {
-        return (
-            betsOfAllPlayers[_address][SideEnum.A],
-            betsOfAllPlayers[_address][SideEnum.B]
-        );
-    }
+    // function challenge(Side _side)
+    //     public
+    //     onlyCreator(false)
+    //     onlyExpiredGame(false)
+    // {
+    //     IERC20Burnable nativeToken = IERC20Burnable(nativeTokenAddress);
+    //     uint256 burnPrice = SafeMath.mul(0.01 * 10**18, betsOfAllPlayers[msg.sender][_side]);
+    //     nativeToken.burnFrom(msg.sender, burnPrice);
 
-    function challenge(SideEnum _side)
-        public
-        onlyCreator(false)
-        onlyExpiredGame(false)
-    {
-        IERC20Burnable nativeToken = IERC20Burnable(nativeTokenAddress);
-        uint256 burnPrice = SafeMath.mul(0.01 * 10**18, betsOfAllPlayers[msg.sender][_side]);
-        nativeToken.burnFrom(msg.sender, burnPrice);
+    //     challenger = msg.sender;
 
-        challenger = msg.sender;
-
-        emit Challenge(msg.sender);
-    }
+    //     emit Challenge(msg.sender);
+    // }
 
     /**
      *  Cancel the created Betting Game
@@ -194,80 +214,87 @@ contract PredictionGame{ //is VRFConsumerBase {
     }
 
     /**
-     * Allow player `_msgSend` to place a bet on the game
+     * Allow player to place a bet on the game
      */
-     
-    function placeBet(SideEnum _side)
+    function placeBet(string memory choice)
         public payable
-        onlyExpiredGame(false)
-    {
-        // require(
-        //     LINK.balanceOf(address(this)) >= fee,
-        //     "Not enough LINK - fill contract with faucet"
-        // );
-        // requestId = requestRandomness(keyHash, fee);
-        // requestIdToAddressRegistry[requestId] = msg.sender;
-        balance += msg.value;
+        // onlyExpiredGame(false)
+    {   
+        sides side = sidesMap[choice];
+        bets[side] += msg.value;                               // Update the bet value on that side
+        betsOfAllPlayers[msg.sender][side] += msg.value;       // Update the bet value for the player
 
-        bets[_side] += msg.value;
-        betsOfAllPlayers[msg.sender][_side] += msg.value;   
-    }
-
-    function createTokens() public payable {
-        tokenValues[SideEnum.A] += msg.value;
-        tokenValues[SideEnum.B] += msg.value;
-        emit TokenCreated(msg.value);
-    }
-
-    function placeBet(SideEnum _side, address _sender, uint256 _value)
-        public 
-        onlyExpiredGame(false)
-    {
-        balance += _value;
-
-        bets[_side] += _value;
-        betsOfAllPlayers[_sender][_side] += _value;
+        //call CPMM
+        uint togive = CPMM(10, side); //10 is test value
         
+        // Mint the tokens
+        ERC20Basic yesToken = ERC20Basic(yesTokenAddress);
+        ERC20Basic noToken = ERC20Basic(noTokenAddress);
+        yesToken.mint(address(this), msg.value);
+        noToken.mint(address(this), msg.value);
+
+        // TODO: transfer the appropriate amount of tokens to the player
     }
 
+    // constant product market maker
+    function CPMM(uint value, sides betSide)
+        private
+        returns (uint)
+    {
+        uint togive;
+        internalTokenCounts[sides.A] = SafeMath.add(internalTokenCounts[sides.A], SafeMath.mul(value, 10**9));
+        internalTokenCounts[sides.B] = SafeMath.add(internalTokenCounts[sides.B], SafeMath.mul(value, 10**9));
+        uint newProduct = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]);
 
-    function deposit(
-        address _tokenAddress
-        // address _baseAddress,
-        // address _quoteAddress
-    ) public onlyExpiredGame(false) {
-
-        IERC20 token = IERC20(_tokenAddress);
-        // How to derive the token amount???
-        // uint256 tokenAmount = SafeMath.div(SafeMath.mul(uint256(price), betsOfAllPlayers[msg.sender][_side]), 100);
-        token.safeTransferFrom(msg.sender, address(this), 0);
-
-        if (depositTokenAddress == address(0)) {
-            depositTokenAddress = _tokenAddress;
+        if (betSide == sides.A) {
+            togive = SafeMath.div(SafeMath.sub(newProduct, K), internalTokenCounts[sides.B]);
+            internalTokenCounts[sides.A] = SafeMath.sub(internalTokenCounts[sides.A], togive);
+        }
+        else {
+            togive = SafeMath.div(SafeMath.sub(newProduct, K), internalTokenCounts[sides.A]);
+            internalTokenCounts[sides.B] = SafeMath.sub(internalTokenCounts[sides.B], togive);
         }
 
-        emit Deposit(_tokenAddress, 0);
+        return togive;
     }
 
-    function withdraw()
-        public
-        onlyExpiredGame(true)
-        // onlyWinner
-        onlyNotWithdrawn
-    {
-        uint gamblerBet = betsOfAllPlayers[msg.sender][result.winner];
-        require(gamblerBet > 0, "You did not bet on this side!");
-        uint gain = gamblerBet + bets[result.loser] * gamblerBet / bets[result.winner];
-        betsOfAllPlayers[msg.sender][SideEnum.A] = 0;
-        betsOfAllPlayers[msg.sender][SideEnum.B] = 0;
-        // msg.sender.transfer(gain);
+    // function deposit(
+    //     address _tokenAddress
+    //     // address _baseAddress,
+    //     // address _quoteAddress
+    // ) public onlyExpiredGame(false) {
 
-        IERC20 token = IERC20(depositTokenAddress);
-        uint256 tokenAmount = token.balanceOf(address(this));
-        token.safeTransfer(msg.sender, tokenAmount);
+    //     IERC20 token = IERC20(_tokenAddress);
+    //     // How to derive the token amount???
+    //     // uint256 tokenAmount = SafeMath.div(SafeMath.mul(uint256(price), betsOfAllPlayers[msg.sender][_side]), 100);
+    //     token.safeTransferFrom(msg.sender, address(this), 0);
 
-        emit Withdraw(msg.sender, depositTokenAddress, 0);
+    //     if (depositTokenAddress == address(0)) {
+    //         depositTokenAddress = _tokenAddress;
+    //     }
 
-        isWithdrawn = true;
-    }
+    //     emit Deposit(_tokenAddress, 0);
+    // }
+
+    // function withdraw()
+    //     public
+    //     onlyExpiredGame(true)
+    //     // onlyWinner
+    //     onlyNotWithdrawn
+    // {
+    //     uint gamblerBet = betsOfAllPlayers[msg.sender][result.winner];
+    //     require(gamblerBet > 0, "You did not bet on this side!");
+    //     uint gain = gamblerBet + bets[result.loser] * gamblerBet / bets[result.winner];
+    //     betsOfAllPlayers[msg.sender][Side.A] = 0;
+    //     betsOfAllPlayers[msg.sender][Side.B] = 0;
+    //     // msg.sender.transfer(gain);
+
+    //     IERC20 token = IERC20(depositTokenAddress);
+    //     uint256 tokenAmount = token.balanceOf(address(this));
+    //     token.safeTransfer(msg.sender, tokenAmount);
+
+    //     emit Withdraw(msg.sender, depositTokenAddress, 0);
+
+    //     isWithdrawn = true;
+    // }
 }
