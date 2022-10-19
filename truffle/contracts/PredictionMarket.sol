@@ -12,15 +12,20 @@ import "./enums/Side.sol";
 contract PredictionMarket is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    using SafeERC20 for IERC20Burnable;
+
+    struct Payload{
+        string betTitle;
+        uint256 expiryDate;
+        string choiceA;
+        string choiceB;
+    }
 
     event PredictionGameCreated(
         uint256 predictionGameId,
         address creator,
-        Side sides,
         address predictionGameAddress,
-        address yesTokenAddress,
-        address noTokenAddress
+        address TokenAAddress,
+        address TokenBAddress
     );
 
     uint256 private predictionGameCount;
@@ -42,45 +47,43 @@ contract PredictionMarket is Ownable {
     /**
      * Create new `PredictionGame` instance
      */
-    function createGame(Side _side, uint256 _expiryTime, string memory _betTitle, string memory _choiceA, string memory _choiceB) public {
+    function createGame(Payload memory payload) public {
         // 1. Create the game tokens
-        string memory yesTokenName = string(abi.encodePacked("PredictionGameTokenYes", Strings.toString(predictionGameCount)));
-        string memory yesTokenSymbol = string(abi.encodePacked("YES", Strings.toString(predictionGameCount)));
-        ERC20Basic yesToken = new ERC20Basic(
-            yesTokenName,
-            yesTokenSymbol
+        string memory tokenAName = string(abi.encodePacked("PredictionGameTokenA", Strings.toString(predictionGameCount)));
+        string memory tokenASymbol = string(abi.encodePacked("A", Strings.toString(predictionGameCount)));
+        ERC20Basic TokenA = new ERC20Basic(
+            tokenAName,
+            tokenASymbol
         );
 
-        string memory noTokenName = string(abi.encodePacked("PredictionGameTokenNo", Strings.toString(predictionGameCount)));
-        string memory noTokenSymbol = string(abi.encodePacked("NO", Strings.toString(predictionGameCount)));
-        ERC20Basic noToken = new ERC20Basic(
-            noTokenName,
-            noTokenSymbol
+        string memory tokenBName = string(abi.encodePacked("PredictionGameTokenB", Strings.toString(predictionGameCount)));
+        string memory tokenBSymbol = string(abi.encodePacked("B", Strings.toString(predictionGameCount)));
+        ERC20Basic TokenB = new ERC20Basic(
+            tokenBName,
+            tokenBSymbol
         );
 
         // 2. Create new `PredictionGame` smart contract
         PredictionGame newPredictionGame = new PredictionGame(
             msg.sender,
-            _side,
-            _expiryTime,
-            address(yesToken),
-            address(noToken),
-            _betTitle,
-            _choiceA,
-            _choiceB
+            payload.expiryDate,
+            address(TokenA),
+            address(TokenB),
+            payload.betTitle,
+            payload.choiceA,
+            payload.choiceB
         );
         predictionMarketRegistry[predictionGameCount] = address(newPredictionGame);
         // Transfer ownership of the tokens to the game
-        yesToken.transferOwnership(address(newPredictionGame));
-        noToken.transferOwnership(address(newPredictionGame));
+        TokenA.transferOwnership(address(newPredictionGame));
+        TokenB.transferOwnership(address(newPredictionGame));
 
         emit PredictionGameCreated(
             predictionGameCount,
             msg.sender,
-            _side,
             address(newPredictionGame),
-            address(yesToken),
-            address(noToken)
+            address(TokenA),
+            address(TokenB)
         );
 
         // 3. Increase Prediction Game Counter
