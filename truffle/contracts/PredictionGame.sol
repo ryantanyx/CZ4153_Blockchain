@@ -34,7 +34,6 @@ contract PredictionGame{ //is VRFConsumerBase {
     // Side public sides;
     PredictionGameStatus public status;
     uint256 public expiryTime;
-    address public nativeTokenAddress;
     address public yesTokenAddress;
     address public noTokenAddress;
     // address public depositTokenAddress;
@@ -64,12 +63,9 @@ contract PredictionGame{ //is VRFConsumerBase {
         string memory _choiceA,
         string memory _choiceB
     ){
-        // keyHash = _keyHash;
-        // fee = _fee;
         creator = _creator;
         //sides = _sides;
         status = PredictionGameStatus.OPEN;
-        // expiryTime = block.timestamp + 30 minutes;
         expiryTime = _expiryTime;
         yesTokenAddress = _yesTokenAddress;
         noTokenAddress = _noTokenAddress;
@@ -100,8 +96,13 @@ contract PredictionGame{ //is VRFConsumerBase {
      * Making sure that this game has either expired or not (depends on `isExpired`)
      */
     modifier onlyExpiredGame(bool isExpired) {
+        // Update PredictionGameStatus to CLOSED if expiryTime is reached
+        if (block.timestamp >= expiryTime) {
+            status = PredictionGameStatus.CLOSED;
+        }
+
         if (isExpired) {
-            require(block.timestamp >= expiryTime || status == PredictionGameStatus.CLOSED, 
+            require(status == PredictionGameStatus.CLOSED, 
                 "This game has not expired!"
             );
         } else {
