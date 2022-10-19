@@ -7,7 +7,6 @@ import "../node_modules/@openzeppelin/contracts/utils/Strings.sol";
 // import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./PredictionGame.sol";
 import "./ERC20Basic.sol";
-import "./interfaces/IERC20Burnable.sol";
 import "./enums/Side.sol";
 
 contract PredictionMarket is Ownable {
