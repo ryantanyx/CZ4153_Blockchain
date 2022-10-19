@@ -2,6 +2,7 @@
 pragma solidity ^0.8.14;
 
 import '../node_modules/@chainlink/contracts/src/v0.8/ChainlinkClient.sol';
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * Request testnet LINK and ETH here: https://faucets.chain.link/
@@ -123,6 +124,7 @@ contract APIConsumer is ChainlinkClient {
         req.addStringArray("gameIds", _bytes32ArrayToString(_gameIds)); // NB: optional filter
         // _addUintArray(req, "statusIds", _statusIds); // NB: optional filter, ignored for market "create".
 
+        req.addStringArray("statusIds", _intArrayToString(_statusIds));
         sendOperatorRequest(req, _payment);
     }
 
@@ -143,6 +145,17 @@ contract APIConsumer is ChainlinkClient {
     function getGamesResolved(bytes32 _requestId, uint256 _idx) external view returns (GameResolve memory) {
         GameResolve memory game = abi.decode(requestIdGames[_requestId][_idx], (GameResolve));
         return game;
+    }
+
+    function getGamesResolved(bytes32 _requestId) external view returns (GameResolve[] memory) {
+        
+        uint256 tmp = requestIdGames[_requestId].length;
+        GameResolve[] memory games = new GameResolve[](tmp);
+        for (uint i = 0; i < tmp; i++){
+            GameResolve memory game = abi.decode(requestIdGames[_requestId][i], (GameResolve));
+            games[i] = game;
+        }
+        return games;
     }
 
     function getOracleAddress() external view returns (address) {
@@ -169,6 +182,14 @@ contract APIConsumer is ChainlinkClient {
     //     r2.buf.endSequence();
     //     _req = r2;
     // }
+
+    function _intArrayToString(uint256[] memory _intArray) private pure returns (string[] memory) {
+        string[] memory gameIds = new string[](_intArray.length);
+        for (uint256 i = 0; i < _intArray.length; i++) {
+            gameIds[i] = Strings.toString(_intArray[i]);
+        }
+        return gameIds;
+    }
 
     function _bytes32ArrayToString(bytes32[] memory _bytes32Array) private pure returns (string[] memory) {
         string[] memory gameIds = new string[](_bytes32Array.length);
