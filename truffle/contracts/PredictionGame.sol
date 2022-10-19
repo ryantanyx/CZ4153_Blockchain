@@ -242,7 +242,12 @@ contract PredictionGame{ //is VRFConsumerBase {
         tokenB.mint(address(this), msg.value);
 
         // Transfer the appropriate amount of tokens to the player
-
+        if (side == sides.A){
+            tokenA.transfer(msg.sender, togive);
+        }
+        else{
+            tokenB.transfer(msg.sender, togive);
+        }
     }
 
     function seeGame()
