@@ -48,13 +48,20 @@ $ truffle migrate
 ```sh
 $ truffle console
 truffle(development)> let ins = await PredictionMarket.deployed()
+truffle(development)> const myE = {A:0, B:1}; const pl = {sideADetails:"test A", sideBDetails: "testB", expiryTime: 1665899999, chosenSide : myE.A}; const msg = {from: "0xbE4874f8D8dB230ebBDEA9d720772FF9a40DE493", value: web3.utils.toWei('0.12')};
+truffle(development)> ins.createGame(pl, msg)
 truffle(development)> const myE = {A:0, B:1}
-truffle(development)> ins.createGame(myE.A, 1675822306)
 truffle(development)> ins.predictionMarketRegistry(0)		// use this address for next line, shouldnt be all zeros
 truffle(development)> game = await PredictionGame.at('0x6515B25dC446746B33e42B7dbB7739E13dDAF6cc')	// See above in-line comment 
 truffle(development)> game.placeBet(myE.A, { value: 10000000000000000000 })
 truffle(development)> game.yesTokenAddress
 truffle(development)> game.getBettingGameInfo()
+
+$ truffle console --network goerli
+ins = await APIConsumer.at('0xf53E329f6AF0EDaa2D2D256467eE08F68993842b')
+tx = await ins.requestGames("0x3662303964333762323834663436353562623531306634393465646331313166", "100000000000000000", "resolve", "11", "1664632800")
+tx.receipt.logs[0].args[0]
+ins.getGamesResolved("0xc41061bd411723ef906d31eae8a034073baeac5a334ea8945bcf0d1f7d4cfeb3", 0)
 ```
 
 

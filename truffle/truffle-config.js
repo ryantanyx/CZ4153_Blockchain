@@ -18,12 +18,11 @@
  *
  */
 
-// require('dotenv').config();
-// const mnemonic = process.env["MNEMONIC"];
-// const infuraProjectId = process.env["INFURA_PROJECT_ID"];
+require('dotenv').config();
+const mnemonic = process.env.MNEMONIC;
+const infuraProjectId = process.env.API_KEY;
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
-
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -43,11 +42,23 @@ module.exports = {
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
     //
-      development: {
-      host: "127.0.0.1",     // Localhost (default: none)
-      port: 7545,            // Standard Ethereum port (default: none)
-      network_id: "5777",       // Any network (default: none)
+    development: {
+    host: "127.0.0.1",     // Localhost (default: none)
+    port: 7545,            // Standard Ethereum port (default: none)
+    network_id: "5777",       // Any network (default: none)
+    },
+    goerli: {
+      provider: () => {
+        return new HDWalletProvider(mnemonic, 'https://goerli.infura.io/v3/' + infuraProjectId)
       },
+      network_id: 5, // eslint-disable-line camelcase
+      chain_id: 5,
+      gas: 5500000,        // Gas limit used for deploys.
+      confirmations: 2,    // # of confirmations to wait between deployments. (default: 0)
+      networkCheckTimeout: 10000,
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true
+    },
     //
     // An additional network, but with some advanced options…
     // advanced: {
