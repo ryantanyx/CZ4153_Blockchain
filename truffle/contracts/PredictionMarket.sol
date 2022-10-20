@@ -12,7 +12,6 @@ import "./enums/Side.sol";
 contract PredictionMarket is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    using SafeERC20 for IERC20Burnable;
 
     event PredictionGameCreated(
         uint256 predictionGameId,
