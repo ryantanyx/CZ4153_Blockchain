@@ -8,7 +8,7 @@ import "./enums/Side.sol";
 contract ERC20Basic is ERC20, ERC20Burnable, Ownable {
 
     
-    SideEnum public side;
+    Side public side;
     address internal contractAddress;
 
     constructor(string memory _name, string memory _symbol)
