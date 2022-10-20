@@ -12,11 +12,6 @@ contract PredictionGame{ //is VRFConsumerBase {
 
     enum PredictionGameStatus { OPEN, CLOSED }
     enum sides {A, B}
-    // enum Side { A, B }
-    // struct Result {
-    //     Side winner;
-    //     Side loser;
-    // }
 
     event Challenge(address challenger);
     event Play(address playerAddress, uint256 randomResult);
@@ -25,14 +20,14 @@ contract PredictionGame{ //is VRFConsumerBase {
 
     string public betTitle;
     string[] choices;
-    uint public constant K = 100 * 10**18; //CPMM k constant
+    uint256 private K; //CPMM invariant
 
     address public creator;
     // Side public sides;
     PredictionGameStatus public status;
     uint256 public expiryTime;
-    address public yesTokenAddress;
-    address public noTokenAddress;
+    address public TokenAAddress;
+    address public TokenBAddress;
     // address public depositTokenAddress;
     // address priceConverterAddress;
     // address public winner;
@@ -40,10 +35,10 @@ contract PredictionGame{ //is VRFConsumerBase {
     // Result public result;
 
     mapping(string => sides) public sidesMap;
-    mapping(sides => uint) public bets;
+    mapping(sides => uint256) public bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
     mapping(address => mapping(sides => uint256)) public betsOfAllPlayers;
-    mapping(sides => uint) internalTokenCounts;     //for CPMM, initialized to 10 * 10^6 each
+    mapping(sides => uint) internalTokenCounts;
 
     constructor(
         // address _vrfCoordinatorAddress,
@@ -51,10 +46,9 @@ contract PredictionGame{ //is VRFConsumerBase {
         // bytes32 _keyHash,
         // uint256 _fee,
         address _creator,
-        Side _sides,
         uint256 _expiryTime,
-        address _yesTokenAddress,
-        address _noTokenAddress,
+        address _TokenAAddress,
+        address _TokenBAddress,
         // address _priceConverterAddress
         string memory _betTitle,
         string memory _choiceA,
@@ -64,17 +58,17 @@ contract PredictionGame{ //is VRFConsumerBase {
         //sides = _sides;
         status = PredictionGameStatus.OPEN;
         expiryTime = _expiryTime;
-        yesTokenAddress = _yesTokenAddress;
-        noTokenAddress = _noTokenAddress;
+        TokenAAddress = _TokenAAddress;
+        TokenBAddress = _TokenBAddress;
         betTitle = _betTitle;
         sidesMap[_choiceA] = sides.A;
         choices.push(_choiceA);
         sidesMap[_choiceB] = sides.B;
         choices.push(_choiceB);
-        internalTokenCounts[sides.A] += 10 * 10**6;
-        internalTokenCounts[sides.B] += 10 * 10**6;
         // priceConverterAddress = _priceConverterAddress;
         // depositTokenAddress = address(0);
+        internalTokenCounts[sides.A] = 0;
+        internalTokenCounts[sides.B] = 0;
     }
 
     /**
@@ -136,6 +130,21 @@ contract PredictionGame{ //is VRFConsumerBase {
         return (
             choices
         );
+    }
+
+    function provideLiquidity()
+        public payable
+        onlyCreator(true)
+    {
+        internalTokenCounts[sides.A] = SafeMath.add(internalTokenCounts[sides.A], msg.value);
+        internalTokenCounts[sides.B] = SafeMath.add(internalTokenCounts[sides.B], msg.value);
+        K = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]);
+
+        // Mint the tokens
+        ERC20Basic tokenA = ERC20Basic(TokenAAddress);
+        ERC20Basic tokenB = ERC20Basic(TokenBAddress);
+        tokenA.mint(address(this), msg.value);
+        tokenB.mint(address(this), msg.value);
     }
 
     function seeInternalTokensA()
@@ -215,22 +224,44 @@ contract PredictionGame{ //is VRFConsumerBase {
      */
     function placeBet(string memory choice)
         public payable
-        // onlyExpiredGame(false)
+        onlyExpiredGame(false)
     {   
         sides side = sidesMap[choice];
-        bets[side] += msg.value;                               // Update the bet value on that side
-        betsOfAllPlayers[msg.sender][side] += msg.value;       // Update the bet value for the player
+        bets[side] = SafeMath.add(bets[side], msg.value);                               // Update the bet value on that side
+        betsOfAllPlayers[msg.sender][side] = SafeMath.add(betsOfAllPlayers[msg.sender][side], msg.value);       // Update the bet value for the player
 
         //call CPMM
-        uint togive = CPMM(10, side); //10 is test value
+        uint togive = CPMM(msg.value, side);
         
         // Mint the tokens
-        ERC20Basic yesToken = ERC20Basic(yesTokenAddress);
-        ERC20Basic noToken = ERC20Basic(noTokenAddress);
-        yesToken.mint(address(this), msg.value);
-        noToken.mint(address(this), msg.value);
+        ERC20Basic tokenA = ERC20Basic(TokenAAddress);
+        ERC20Basic tokenB = ERC20Basic(TokenBAddress);
+        tokenA.mint(address(this), msg.value);
+        tokenB.mint(address(this), msg.value);
 
-        // TODO: transfer the appropriate amount of tokens to the player
+        // Transfer the appropriate amount of tokens to the player
+
+    }
+
+    function seeGame()
+        public view
+        returns(
+            string memory,
+            uint256,
+            string memory,
+            uint256,
+            string memory,
+            uint256
+        )
+    {
+        return (
+            betTitle,
+            expiryTime,
+            choices[0],
+            bets[sides.A],
+            choices[1],
+            bets[sides.B]
+        );
     }
 
     // constant product market maker
@@ -239,8 +270,8 @@ contract PredictionGame{ //is VRFConsumerBase {
         returns (uint)
     {
         uint togive;
-        internalTokenCounts[sides.A] = SafeMath.add(internalTokenCounts[sides.A], SafeMath.mul(value, 10**9));
-        internalTokenCounts[sides.B] = SafeMath.add(internalTokenCounts[sides.B], SafeMath.mul(value, 10**9));
+        internalTokenCounts[sides.A] = SafeMath.add(internalTokenCounts[sides.A], value);
+        internalTokenCounts[sides.B] = SafeMath.add(internalTokenCounts[sides.B], value);
         uint newProduct = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]);
 
         if (betSide == sides.A) {
