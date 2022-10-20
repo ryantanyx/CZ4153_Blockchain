@@ -1,6 +1,5 @@
-const APIConsumer = artifacts.require("APIConsumer");
-
+const ChainLinkAPIConsumer = artifacts.require("ChainLinkAPIConsumer");
 
 module.exports = async function (deployer) {
-  await deployer.deploy(APIConsumer);
+  await deployer.deploy(ChainLinkAPIConsumer);
 };

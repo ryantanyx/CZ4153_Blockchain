@@ -9,8 +9,10 @@
     "@truffle/hdwallet-provider": "^2.1.0",
     "dotenv": "^16.0.3",
     "ganache": "^7.4.4",
+    "solc": "^0.8.17",
     "truffle": "^5.6.1",
-    "truffle-hdwallet-provider": "^1.0.17"
+    "truffle-hdwallet-provider": "^1.0.17",
+    "web3": "^1.8.0"
   },
   "scripts": {
     "test": "truffle test"
