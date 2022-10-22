@@ -169,6 +169,16 @@ contract PredictionGame{ //is VRFConsumerBase {
         return internalTokenCounts[sides.B];
     }
 
+    function seeK()
+        public
+        view
+        returns (
+            uint
+        )
+    {
+        return K;
+    }
+
     /**
      * Get Betting Game all public info
      */
@@ -289,6 +299,8 @@ contract PredictionGame{ //is VRFConsumerBase {
             togive = SafeMath.div(SafeMath.sub(newProduct, K), internalTokenCounts[sides.A]);
             internalTokenCounts[sides.B] = SafeMath.sub(internalTokenCounts[sides.B], togive);
         }
+
+        K = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]); //update K in case of division remainders
 
         return togive;
     }
