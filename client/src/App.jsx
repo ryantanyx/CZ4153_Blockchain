@@ -7,7 +7,8 @@ import Footer from "./components/Footer";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import CreateGameForm from "./components/CreateGameForm";
-import { Container, Box, Typography, Grid, CardMedia, Button, Card, CardContent, Dialog, IconButton } from '@mui/material';
+import GameList from "./components/GameList";
+import { Container, Box, Typography, Grid, CardMedia, Button, Dialog } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import banner from "./banner.jpg";
 
@@ -53,41 +54,7 @@ function App() {
       <Dialog open={open} fullWidth={true} maxWidth="md">
         <CreateGameForm onCloseForm={setOpen} />
       </Dialog>
-      <Box sx={{ my: 10 }}>
-        <Container fixed>
-          <Grid container spacing={2}>
-            <Grid xs={3}>
-              <Card>
-                <CardContent>
-                  <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                    Word of the Day
-                  </Typography>
-                  <Typography variant="h5" component="div">
-                    benovelent
-                  </Typography>
-                  <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                    adjective
-                  </Typography>
-                  <Typography variant="body2">
-                    well meaning and kindly.
-                    <br />
-                    {'"a benevolent smile"'}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid xs={3}>
-
-            </Grid>
-            <Grid xs={3}>
-
-            </Grid>
-            <Grid xs={3}>
-
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
+      <GameList />
     </Box>
   );
 }
