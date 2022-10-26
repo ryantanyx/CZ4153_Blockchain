@@ -1,11 +1,9 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.14;
 
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-// import "../node_modules/@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
-// import "../interfaces/IPriceConverter.sol";
 import "./ERC20Basic.sol";
 import "./enums/Side.sol";
 
