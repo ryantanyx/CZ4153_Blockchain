@@ -169,39 +169,39 @@ contract PredictionGame{ //is VRFConsumerBase {
         return address(this).balance;
     }
 
-    // function seeInternalTokensA()
-    //     public
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return internalTokenCounts[sides.A];
-    // }
+    function seeInternalTokensA()
+        public
+        view
+        returns (
+            uint
+        )
+    {
+        return internalTokenCounts[sides.A];
+    }
 
-    // function seeInternalTokensB()
-    //     public
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return internalTokenCounts[sides.B];
-    // }
+    function seeInternalTokensB()
+        public
+        view
+        returns (
+            uint
+        )
+    {
+        return internalTokenCounts[sides.B];
+    }
 
-    // function seeK()
-    //     public
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return K;
-    // }
+    function seeK()
+        public
+        view
+        returns (
+            uint
+        )
+    {
+        return K;
+    }
 
     function testWinner() public {
         winner = 'a';
-        externalTokens[sidesMap[winner]] = 300;
+        externalTokens[sidesMap[winner]] = 3 * (10**18);
     }
 
     function withdrawWinnings()
@@ -229,7 +229,7 @@ contract PredictionGame{ //is VRFConsumerBase {
         // proportion of winning share D = a / b
         // proportion of pot = E = D * c
 
-        uint256 potShare = SafeMath.div(SafeMath.mul(SafeMath.div(SafeMath.mul(winTokens, 10**18), winTokensTotal), totalPot), 10**18);
+        uint256 potShare = SafeMath.div(SafeMath.mul(SafeMath.div(SafeMath.mul(winTokens, 10**6), winTokensTotal), totalPot), 10**6);
 
         payable(msg.sender).transfer(potShare);
 
