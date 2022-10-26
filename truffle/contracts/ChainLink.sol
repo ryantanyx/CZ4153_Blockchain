@@ -22,15 +22,34 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
     mapping(bytes32 => bytes[]) public requestIdGames;
 
     error FailedTransferLINK(address to, uint256 amount);
-    
-    bytes32 private jobId;
 
+    event RequestSent(Chainlink.Request req);
+    event GameRequestFulfilled(bytes32 requestId);
+    bytes32 private immutable jobId;
+    uint256 private immutable fee;
 
-     constructor() {
-        setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
-        setChainlinkOracle(0xB9756312523826A566e222a34793E414A81c88E1);
-        jobId = 0x3662303964333762323834663436353562623531306634393465646331313166;
+    constructor(
+        address _oracle,
+        bytes32 _jobId,
+        uint256 _fee,
+        address _link
+    ) {
+        if (_link == address(0)) {
+            setPublicChainlinkToken();
+        } else {
+            setChainlinkToken(_link);
+        }
+        setChainlinkOracle(_oracle);
+        jobId = _jobId;
+        fee = _fee;
     }
+
+
+    //  constructor() {
+    //     setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
+    //     setChainlinkOracle(0xB9756312523826A566e222a34793E414A81c88E1);
+    //     jobId = 0x3662303964333762323834663436353562623531306634393465646331313166;
+    // }
     /* ========== EXTERNAL FUNCTIONS ========== */
 
     function cancelRequest(
@@ -44,6 +63,7 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
 
     function fulfillGames(bytes32 _requestId, bytes[] memory _games) external recordChainlinkFulfillment(_requestId) {
         requestIdGames[_requestId] = _games;
+        emit GameRequestFulfilled(_requestId);
     }
 
     /**
@@ -59,14 +79,16 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
         string calldata _market,
         uint256 _sportId,
         uint256 _date
-    ) external {
+    ) external returns (bytes32 requestId){
+        require(_payment >= 100000000000000000, "Insufficient link sent to oracle!");
         Chainlink.Request memory req = buildOperatorRequest(jobId, this.fulfillGames.selector);
 
         req.addUint("date", _date);
         req.add("market", _market);
         req.addUint("sportId", _sportId);
-
-        sendOperatorRequest(req, _payment);
+        emit RequestSent(req);
+        return sendOperatorRequestTo(chainlinkOracleAddress() ,req, _payment);
+        
     }
 
     /**
