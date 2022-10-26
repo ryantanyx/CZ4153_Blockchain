@@ -23,6 +23,8 @@ contract PredictionGame{ //is VRFConsumerBase {
     string public betTitle;
     string[] choices;
     uint256 private K; //CPMM invariant
+    uint256 public totalPot;
+    string public winner;
 
     address public creator;
     // Side public sides;
@@ -40,7 +42,9 @@ contract PredictionGame{ //is VRFConsumerBase {
     mapping(sides => uint256) public bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
     mapping(address => mapping(sides => uint256)) public betsOfAllPlayers;
-    mapping(sides => uint) internalTokenCounts;
+    mapping(sides => uint256) internalTokenCounts;
+    mapping(sides => uint256) externalTokens;
+
 
     constructor(
         // address _vrfCoordinatorAddress,
@@ -71,6 +75,9 @@ contract PredictionGame{ //is VRFConsumerBase {
         // depositTokenAddress = address(0);
         internalTokenCounts[sides.A] = 0;
         internalTokenCounts[sides.B] = 0;
+        externalTokens[sides.A] = 0;
+        externalTokens[sides.B] = 0;
+        totalPot = 0;
     }
 
     /**
@@ -122,17 +129,17 @@ contract PredictionGame{ //is VRFConsumerBase {
     /**
      * Print choices in game
      */
-    function getChoices()
-        public
-        view
-        returns (
-            string[] memory entries
-        )
-    {
-        return (
-            choices
-        );
-    }
+    // function getChoices()
+    //     public
+    //     view
+    //     returns (
+    //         string[] memory entries
+    //     )
+    // {
+    //     return (
+    //         choices
+    //     );
+    // }
 
     function provideLiquidity()
         public payable
@@ -147,89 +154,126 @@ contract PredictionGame{ //is VRFConsumerBase {
         ERC20Basic tokenB = ERC20Basic(TokenBAddress);
         tokenA.mint(address(this), msg.value);
         tokenB.mint(address(this), msg.value);
+
+        //update pot (2% fees)
+        totalPot = SafeMath.div(SafeMath.mul(address(this).balance, 98), 100);
     }
 
-    function seeInternalTokensA()
+    function seeBalance()
         public
         view
         returns (
             uint
         )
     {
-        return internalTokenCounts[sides.A];
+        return address(this).balance;
     }
 
-    function seeInternalTokensB()
-        public
-        view
-        returns (
-            uint
-        )
-    {
-        return internalTokenCounts[sides.B];
+    // function seeInternalTokensA()
+    //     public
+    //     view
+    //     returns (
+    //         uint
+    //     )
+    // {
+    //     return internalTokenCounts[sides.A];
+    // }
+
+    // function seeInternalTokensB()
+    //     public
+    //     view
+    //     returns (
+    //         uint
+    //     )
+    // {
+    //     return internalTokenCounts[sides.B];
+    // }
+
+    // function seeK()
+    //     public
+    //     view
+    //     returns (
+    //         uint
+    //     )
+    // {
+    //     return K;
+    // }
+
+    function testWinner() public {
+        winner = 'a';
+        externalTokens[sidesMap[winner]] = 300;
     }
 
-    function seeK()
+    function withdrawWinnings()
         public
-        view
-        returns (
-            uint
-        )
-    {
-        return K;
+        payable
+    {   
+        require(betsOfAllPlayers[msg.sender][sidesMap[winner]] > 0); // check player has placed bets on winning side and hasn't withdrawn
+
+        uint winTokens = 0;
+        uint winTokensTotal = 0;
+
+        if (sidesMap[winner] == sides.A) {
+            ERC20Basic tokenA = ERC20Basic(TokenAAddress);
+            winTokens = tokenA.balanceOf(msg.sender);
+            winTokensTotal = externalTokens[sides.A];
+        }
+        else {
+            ERC20Basic tokenB = ERC20Basic(TokenBAddress);
+            winTokens = tokenB.balanceOf(msg.sender);
+            winTokensTotal = externalTokens[sides.B];
+        }
+
+        // calc % winnings
+        // let a = amt of winning tokens sender holds, b = amt of total winning tokens issued, c = totalPot
+        // proportion of winning share D = a / b
+        // proportion of pot = E = D * c
+
+        uint256 potShare = SafeMath.div(SafeMath.mul(SafeMath.div(SafeMath.mul(winTokens, 10**18), winTokensTotal), totalPot), 10**18);
+
+        payable(msg.sender).transfer(potShare);
+
+        betsOfAllPlayers[msg.sender][sidesMap[winner]] = 0;  //signal player has already withdrawn
     }
 
     /**
      * Get Betting Game all public info
      */
-    function getBettingGameInfo()
-        public
-        view
-        returns (
-            address,
-            // address,
-            // Side,
-            PredictionGameStatus,
-            uint256
-            // Side
-            // bool
-            // uint256,
-            // uint256
-        )
-    {
-        return (
-            creator,
-            // challenger,
-            // sides,
-            status,
-            expiryTime
-            // result.winner
-            // isWithdrawn
-            // playerPredictionRecordRegistry[creator], //supposed to return 
-            // playerPredictionRecordRegistry[challenger]
-        );
-    }
-
-    // function challenge(Side _side)
+    // function getBettingGameInfo()
     //     public
-    //     onlyCreator(false)
-    //     onlyExpiredGame(false)
+    //     view
+    //     returns (
+    //         address,
+    //         // address,
+    //         // Side,
+    //         PredictionGameStatus,
+    //         uint256
+    //         // Side
+    //         // bool
+    //         // uint256,
+    //         // uint256
+    //     )
     // {
-    //     IERC20Burnable nativeToken = IERC20Burnable(nativeTokenAddress);
-    //     uint256 burnPrice = SafeMath.mul(0.01 * 10**18, betsOfAllPlayers[msg.sender][_side]);
-    //     nativeToken.burnFrom(msg.sender, burnPrice);
-
-    //     challenger = msg.sender;
-
-    //     emit Challenge(msg.sender);
+    //     return (
+    //         creator,
+    //         // challenger,
+    //         // sides,
+    //         status,
+    //         expiryTime
+    //         // result.winner
+    //         // isWithdrawn
+    //         // playerPredictionRecordRegistry[creator], //supposed to return 
+    //         // playerPredictionRecordRegistry[challenger]
+    //     );
     // }
+
 
     /**
      *  Cancel the created Betting Game
      */
-    function cancel() public onlyCreator(true) {
-        status = PredictionGameStatus.CLOSED;
-    }
+    // function cancel() public onlyCreator(true) {
+    //     status = PredictionGameStatus.CLOSED;
+    // }
 
     /**
      * Allow player to place a bet on the game
@@ -241,9 +285,7 @@ contract PredictionGame{ //is VRFConsumerBase {
         sides side = sidesMap[choice];
         bets[side] = SafeMath.add(bets[side], msg.value);                               // Update the bet value on that side
         betsOfAllPlayers[msg.sender][side] = SafeMath.add(betsOfAllPlayers[msg.sender][side], msg.value);       // Update the bet value for the player
-
-        //call CPMM
-        uint togive = CPMM(msg.value, side);
+        totalPot = SafeMath.add(totalPot, SafeMath.div(SafeMath.mul(msg.value, 98), 100)); //update pot
         
         // Mint the tokens
         ERC20Basic tokenA = ERC20Basic(TokenAAddress);
@@ -251,35 +293,40 @@ contract PredictionGame{ //is VRFConsumerBase {
         tokenA.mint(address(this), msg.value);
         tokenB.mint(address(this), msg.value);
 
+        //call CPMM
+        uint togive = CPMM(msg.value, side);
+
         // Transfer the appropriate amount of tokens to the player
         if (side == sides.A){
             tokenA.transfer(msg.sender, togive);
+            externalTokens[sides.A] = SafeMath.add(externalTokens[sides.A], togive);
         }
         else{
             tokenB.transfer(msg.sender, togive);
+            externalTokens[sides.A] = SafeMath.add(externalTokens[sides.B], togive);
         }
     }
 
-    function seeGame()
-        public view
-        returns(
-            string memory,
-            uint256,
-            string memory,
-            uint256,
-            string memory,
-            uint256
-        )
-    {
-        return (
-            betTitle,
-            expiryTime,
-            choices[0],
-            bets[sides.A],
-            choices[1],
-            bets[sides.B]
-        );
-    }
+    // function seeGame()
+    //     public view
+    //     returns(
+    //         string memory,
+    //         uint256,
+    //         string memory,
+    //         uint256,
+    //         string memory,
+    //         uint256
+    //     )
+    // {
+    //     return (
+    //         betTitle,
+    //         expiryTime,
+    //         choices[0],
+    //         bets[sides.A],
+    //         choices[1],
+    //         bets[sides.B]
+    //     );
+    // }
 
     // constant product market maker
     function CPMM(uint value, sides betSide)
@@ -304,44 +351,4 @@ contract PredictionGame{ //is VRFConsumerBase {
 
         return togive;
     }
-
-    // function deposit(
-    //     address _tokenAddress
-    //     // address _baseAddress,
-    //     // address _quoteAddress
-    // ) public onlyExpiredGame(false) {
-
-    //     IERC20 token = IERC20(_tokenAddress);
-    //     // How to derive the token amount???
-    //     // uint256 tokenAmount = SafeMath.div(SafeMath.mul(uint256(price), betsOfAllPlayers[msg.sender][_side]), 100);
-    //     token.safeTransferFrom(msg.sender, address(this), 0);
-
-    //     if (depositTokenAddress == address(0)) {
-    //         depositTokenAddress = _tokenAddress;
-    //     }
-
-    //     emit Deposit(_tokenAddress, 0);
-    // }
-
-    // function withdraw()
-    //     public
-    //     onlyExpiredGame(true)
-    //     // onlyWinner
-    //     onlyNotWithdrawn
-    // {
-    //     uint gamblerBet = betsOfAllPlayers[msg.sender][result.winner];
-    //     require(gamblerBet > 0, "You did not bet on this side!");
-    //     uint gain = gamblerBet + bets[result.loser] * gamblerBet / bets[result.winner];
-    //     betsOfAllPlayers[msg.sender][Side.A] = 0;
-    //     betsOfAllPlayers[msg.sender][Side.B] = 0;
-    //     // msg.sender.transfer(gain);
-
-    //     IERC20 token = IERC20(depositTokenAddress);
-    //     uint256 tokenAmount = token.balanceOf(address(this));
-    //     token.safeTransfer(msg.sender, tokenAmount);
-
-    //     emit Withdraw(msg.sender, depositTokenAddress, 0);
-
-    //     isWithdrawn = true;
-    // }
 }
