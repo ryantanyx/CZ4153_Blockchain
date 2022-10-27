@@ -8,6 +8,7 @@ import "../node_modules/@openzeppelin/contracts/utils/Strings.sol";
 import "./PredictionGame.sol";
 import "./ERC20Basic.sol";
 import "./enums/Side.sol";
+import "./GameContractFactory.sol";
 
 contract PredictionMarket is Ownable {
     using SafeMath for uint256;
@@ -30,10 +31,16 @@ contract PredictionMarket is Ownable {
 
     uint256 private predictionGameCount;
     mapping(uint256 => address) public predictionMarketRegistry;
+    address private chainLinkAddress;
+    GameContractFactory gameFactory;
 
     constructor(
+        address _chainLinkAddress,
+        address _gameContractFactoryAddr
     ) {
+        chainLinkAddress = _chainLinkAddress;
         predictionGameCount = 0;
+        gameFactory = GameContractFactory(_gameContractFactoryAddr);
     }
 
     /**
@@ -64,7 +71,7 @@ contract PredictionMarket is Ownable {
         );
 
         // 2. Create new `PredictionGame` smart contract
-        PredictionGame newPredictionGame = new PredictionGame(
+        PredictionGame newPredictionGame = gameFactory.createGameContract(
             msg.sender,
             payload.expiryDate,
             address(TokenA),
@@ -73,20 +80,28 @@ contract PredictionMarket is Ownable {
             payload.choiceA,
             payload.choiceB
         );
-        predictionMarketRegistry[predictionGameCount] = address(newPredictionGame);
-        // Transfer ownership of the tokens to the game
-        TokenA.transferOwnership(address(newPredictionGame));
-        TokenB.transferOwnership(address(newPredictionGame));
+        address newPredictionGameAddr = address(newPredictionGame);
+        predictionMarketRegistry[predictionGameCount] = newPredictionGameAddr;
+        // // Transfer ownership of the tokens to the game
+        TokenA.transferOwnership(newPredictionGameAddr);
+        TokenB.transferOwnership(newPredictionGameAddr);
 
         emit PredictionGameCreated(
             predictionGameCount,
             msg.sender,
-            address(newPredictionGame),
+            newPredictionGameAddr,
             address(TokenA),
             address(TokenB)
         );
 
         // 3. Increase Prediction Game Counter
         predictionGameCount = SafeMath.add(predictionGameCount, 1);
+    }
+
+    function getChainLinkAddress()
+        external view
+        returns(address addr)
+    {
+        return (address(gameFactory));
     }
 }
