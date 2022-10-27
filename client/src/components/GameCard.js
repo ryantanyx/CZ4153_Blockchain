@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Typography, Card, CardContent, CardActions, Button, Box, Grid } from '@mui/material';
 
-const GameCard = ({ onClickOpenGame }) => {
+const GameCard = ({ onClickOpenGame, game }) => {
+    const [betTitle, setBetTitle] = React.useState(undefined);
 
     const openGame = React.useCallback(() => {
         onClickOpenGame(true);

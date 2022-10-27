@@ -12,13 +12,14 @@ import { Container, Box, Typography, Grid, CardMedia, Button, Dialog, CircularPr
 import SendIcon from '@mui/icons-material/Send';
 import banner from "./banner.jpg";
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import getBlockchain from './ethereum.js';
+import { getBlockchain, getPredictionGame } from './ethereum.js';
 
 function App() {
   const [open, setOpen] = React.useState(false);
   const [userAddress, setUserAddress] = React.useState(undefined);
   const [predictionMarket, setPredictionMarket] = React.useState(undefined);
   const [oracle, setOracle] = React.useState(undefined);
+  const [predictionGames, setPredictionGames] = React.useState(undefined);
 
   // Initialisation
   React.useEffect(() => {
@@ -27,9 +28,24 @@ function App() {
       setPredictionMarket(predictionMarket);
       setUserAddress(signerAddress);
       setOracle(oracle);
+
+      console.log(predictionMarket);
+      console.log(oracle);
+      console.log(signerAddress);
+
+      // Get all the prediction game addresses
+      const gameCount = parseInt((await predictionMarket.predictionGameCount()).toString());
+      const predictionGameAddresses = await Promise.all(
+        [...Array(gameCount).keys()].map(x => predictionMarket.predictionMarketRegistry(x))
+      );
+
+      const predictionGames = await Promise.all(
+        predictionGameAddresses.map(x => getPredictionGame(x))
+      );
+      setPredictionGames(predictionGames);
     }
     init();
-  }, [])
+  }, []);
 
   // Function to open the create game form
   const openCreateGameForm = () => {
@@ -94,7 +110,7 @@ function App() {
       <Dialog open={open} fullWidth={true} maxWidth="md">
         <CreateGameForm onCloseForm={setOpen} />
       </Dialog>
-      <GameList />
+      <GameList predictionGames={predictionGames} />
     </Box>
   );
 }

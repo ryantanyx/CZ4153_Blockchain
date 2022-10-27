@@ -1,8 +1,9 @@
 import { ethers, Contract } from 'ethers';
 import PredictionMarket from './contracts/PredictionMarket.json';
+import PredictionGame from './contracts/PredictionGame.json';
 import ChainLinkAPIConsumer from './contracts/ChainLinkAPIConsumer.json';
 
-const getBlockchain = () =>
+export const getBlockchain = () =>
     new Promise((resolve, reject) => {
         // Wait for browser to load fully
         window.addEventListener('load', async () => {
@@ -25,12 +26,23 @@ const getBlockchain = () =>
                     ChainLinkAPIConsumer.networks[window.ethereum.networkVersion].address,
                     ChainLinkAPIConsumer.abi,
                     signer
-                )
+                );
 
-            resolve({signerAddress, predictionMarket, oracle});
+                resolve({signerAddress, predictionMarket, oracle});
             }
             resolve({signerAddress: undefined, predictionMarket: undefined, oracle: undefined});
         });
     });
 
-export default getBlockchain;
+export const getPredictionGame = (gameAddress) =>
+    new Promise((resolve, reject) => {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const predictionGame = new Contract(
+            gameAddress,
+            PredictionGame.abi,
+            signer
+        );
+        resolve(predictionGame);
+    })

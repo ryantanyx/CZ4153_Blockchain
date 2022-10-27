@@ -28,7 +28,7 @@ contract PredictionMarket is Ownable {
         address TokenBAddress
     );
 
-    uint256 private predictionGameCount;
+    uint256 public predictionGameCount;
     mapping(uint256 => address) public predictionMarketRegistry;
 
     constructor(
