@@ -54,7 +54,7 @@ contract PredictionMarket is Ownable {
     /**
      * Create new `PredictionGame` instance
      */
-    function createGame(Payload memory payload) public {
+    function createGame(Payload memory payload) external {
         // 1. Create the game tokens
         string memory tokenAName = string(abi.encodePacked("PredictionGameTokenA", Strings.toString(predictionGameCount)));
         string memory tokenASymbol = string(abi.encodePacked("A", Strings.toString(predictionGameCount)));
@@ -82,7 +82,7 @@ contract PredictionMarket is Ownable {
         );
         address newPredictionGameAddr = address(newPredictionGame);
         predictionMarketRegistry[predictionGameCount] = newPredictionGameAddr;
-        // // Transfer ownership of the tokens to the game
+        // Transfer ownership of the tokens to the game
         TokenA.transferOwnership(newPredictionGameAddr);
         TokenB.transferOwnership(newPredictionGameAddr);
 
