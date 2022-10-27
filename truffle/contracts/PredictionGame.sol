@@ -4,15 +4,15 @@ pragma solidity ^0.8.14;
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./InternalToken.sol";
 import "./ERC20Basic.sol";
 import "./enums/Side.sol";
 
-contract PredictionGame{ //is VRFConsumerBase {
+contract PredictionGame{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     enum PredictionGameStatus { OPEN, CLOSED }
-    enum sides {A, B}
 
     event Challenge(address challenger);
     event Play(address playerAddress, uint256 randomResult);
@@ -21,74 +21,50 @@ contract PredictionGame{ //is VRFConsumerBase {
 
     string public betTitle;
     string[] choices;
-    uint256 private K; //CPMM invariant
-    uint256 public totalPot;
-    string public winner;
-
+    
+    uint256 private totalPot;
+    string private winner;
     address public creator;
-    // Side public sides;
     PredictionGameStatus public status;
     uint256 public expiryTime;
-    address public TokenAAddress;
-    address public TokenBAddress;
-    // address public depositTokenAddress;
-    // address priceConverterAddress;
+    ERC20Basic private tokenA;
+    ERC20Basic private tokenB;
+    InternalToken internalToken;
     // address public winner;
     // bool public isWithdrawn;
     // Result public result;
 
-    mapping(string => sides) public sidesMap;
-    mapping(sides => uint256) public bets;
+    mapping(string => Side) public sidesMap;
+    mapping(Side => uint256) private bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
-    mapping(address => mapping(sides => uint256)) public betsOfAllPlayers;
-    mapping(sides => uint256) internalTokenCounts;
-    mapping(sides => uint256) externalTokens;
+    mapping(address => mapping(Side => uint256)) private betsOfAllPlayers;
+
+    mapping(Side => uint256) externalTokens;
 
 
     constructor(
-        // address _vrfCoordinatorAddress,
-        // address _linkTokenAddress,
-        // bytes32 _keyHash,
-        // uint256 _fee,
         address _creator,
         uint256 _expiryTime,
         address _TokenAAddress,
         address _TokenBAddress,
-        // address _priceConverterAddress
         string memory _betTitle,
         string memory _choiceA,
         string memory _choiceB
     ){
         creator = _creator;
-        //sides = _sides;
         status = PredictionGameStatus.OPEN;
         expiryTime = _expiryTime;
-        TokenAAddress = _TokenAAddress;
-        TokenBAddress = _TokenBAddress;
+        tokenA = ERC20Basic(_TokenAAddress);
+        tokenB = ERC20Basic(_TokenBAddress);
         betTitle = _betTitle;
-        sidesMap[_choiceA] = sides.A;
+        sidesMap[_choiceA] = Side.YES;
         choices.push(_choiceA);
-        sidesMap[_choiceB] = sides.B;
+        sidesMap[_choiceB] = Side.NO;
         choices.push(_choiceB);
-        // priceConverterAddress = _priceConverterAddress;
-        // depositTokenAddress = address(0);
-        internalTokenCounts[sides.A] = 0;
-        internalTokenCounts[sides.B] = 0;
-        externalTokens[sides.A] = 0;
-        externalTokens[sides.B] = 0;
+        internalToken = new InternalToken(0, address(this));
+        externalTokens[Side.YES] = 0;
+        externalTokens[Side.NO] = 0;
         totalPot = 0;
-    }
-
-    /**
-     * Making sure that `_msgSend` is either a creator or not (depends `isEqual`)
-     */
-    modifier onlyCreator(bool isEqual) {
-        if (isEqual) {
-            require(creator == msg.sender, "You are not the creator of this game!");
-        } else {
-            require(creator != msg.sender, "You are the creator of this game!");
-        }
-        _;
     }
 
     /**
@@ -111,11 +87,6 @@ contract PredictionGame{ //is VRFConsumerBase {
         }
         _;
     }
-
-    // modifier onlyNotWithdrawn() {
-    //     require(isWithdrawn == false, "The fund in this game has been withdrawn!");
-    //     _;
-    // }
 
     /**
      * Making sure that the function has only access to the winner
@@ -141,16 +112,12 @@ contract PredictionGame{ //is VRFConsumerBase {
     // }
 
     function provideLiquidity()
-        public payable
-        onlyCreator(true)
+        external payable
     {
-        internalTokenCounts[sides.A] = SafeMath.add(internalTokenCounts[sides.A], msg.value);
-        internalTokenCounts[sides.B] = SafeMath.add(internalTokenCounts[sides.B], msg.value);
-        K = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]);
+        require(creator == msg.sender, "You are not the creator of this game!");
+        internalToken.setValue(msg.value);
 
         // Mint the tokens
-        ERC20Basic tokenA = ERC20Basic(TokenAAddress);
-        ERC20Basic tokenB = ERC20Basic(TokenBAddress);
         tokenA.mint(address(this), msg.value);
         tokenB.mint(address(this), msg.value);
 
@@ -159,7 +126,7 @@ contract PredictionGame{ //is VRFConsumerBase {
     }
 
     function seeBalance()
-        public
+        external
         view
         returns (
             uint
@@ -168,43 +135,19 @@ contract PredictionGame{ //is VRFConsumerBase {
         return address(this).balance;
     }
 
-    // function seeInternalTokensA()
-    //     public
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return internalTokenCounts[sides.A];
-    // }
-
-    // function seeInternalTokensB()
-    //     public
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return internalTokenCounts[sides.B];
-    // }
-
-    // function seeK()
-    //     public
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return K;
-    // }
-
-    function testWinner() public {
-        winner = 'a';
-        externalTokens[sidesMap[winner]] = 300;
+    // Pass in side of which Internal Tokens you wish to query
+    function seeInternalTokens(Side side)
+        external
+        view
+        returns (
+            uint
+        )
+    {
+        return internalToken.seeInternalTokens(side);
     }
 
     function withdrawWinnings()
-        public
+        external
         payable
     {   
         require(betsOfAllPlayers[msg.sender][sidesMap[winner]] > 0); // check player has placed bets on winning side and hasn't withdrawn
@@ -212,15 +155,13 @@ contract PredictionGame{ //is VRFConsumerBase {
         uint winTokens = 0;
         uint winTokensTotal = 0;
 
-        if (sidesMap[winner] == sides.A) {
-            ERC20Basic tokenA = ERC20Basic(TokenAAddress);
+        if (sidesMap[winner] == Side.YES) {
             winTokens = tokenA.balanceOf(msg.sender);
-            winTokensTotal = externalTokens[sides.A];
+            winTokensTotal = externalTokens[Side.YES];
         }
         else {
-            ERC20Basic tokenB = ERC20Basic(TokenBAddress);
             winTokens = tokenB.balanceOf(msg.sender);
-            winTokensTotal = externalTokens[sides.B];
+            winTokensTotal = externalTokens[Side.NO];
         }
 
         // calc % winnings
@@ -278,36 +219,35 @@ contract PredictionGame{ //is VRFConsumerBase {
      * Allow player to place a bet on the game
      */
     function placeBet(string memory choice)
-        public payable
+        external payable
         onlyExpiredGame(false)
     {   
-        sides side = sidesMap[choice];
+        Side side = sidesMap[choice];
         bets[side] = SafeMath.add(bets[side], msg.value);                               // Update the bet value on that side
         betsOfAllPlayers[msg.sender][side] = SafeMath.add(betsOfAllPlayers[msg.sender][side], msg.value);       // Update the bet value for the player
         totalPot = SafeMath.add(totalPot, SafeMath.div(SafeMath.mul(msg.value, 98), 100)); //update pot
         
         // Mint the tokens
-        ERC20Basic tokenA = ERC20Basic(TokenAAddress);
-        ERC20Basic tokenB = ERC20Basic(TokenBAddress);
+
         tokenA.mint(address(this), msg.value);
         tokenB.mint(address(this), msg.value);
 
         //call CPMM
-        uint togive = CPMM(msg.value, side);
+        uint togive = internalToken.CPMM(msg.value, side);
 
         // Transfer the appropriate amount of tokens to the player
-        if (side == sides.A){
+        if (side == Side.YES){
             tokenA.transfer(msg.sender, togive);
-            externalTokens[sides.A] = SafeMath.add(externalTokens[sides.A], togive);
+            externalTokens[Side.YES] = SafeMath.add(externalTokens[Side.YES], togive);
         }
         else{
             tokenB.transfer(msg.sender, togive);
-            externalTokens[sides.A] = SafeMath.add(externalTokens[sides.B], togive);
+            externalTokens[Side.YES] = SafeMath.add(externalTokens[Side.NO], togive);
         }
     }
 
     // function seeGame()
-    //     public view
+    //     external view
     //     returns(
     //         string memory,
     //         uint256,
@@ -321,33 +261,10 @@ contract PredictionGame{ //is VRFConsumerBase {
     //         betTitle,
     //         expiryTime,
     //         choices[0],
-    //         bets[sides.A],
+    //         bets[Side.YES],
     //         choices[1],
-    //         bets[sides.B]
+    //         bets[Side.NO]
     //     );
     // }
-
-    // constant product market maker
-    function CPMM(uint value, sides betSide)
-        private
-        returns (uint)
-    {
-        uint togive;
-        internalTokenCounts[sides.A] = SafeMath.add(internalTokenCounts[sides.A], value);
-        internalTokenCounts[sides.B] = SafeMath.add(internalTokenCounts[sides.B], value);
-        uint newProduct = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]);
-
-        if (betSide == sides.A) {
-            togive = SafeMath.div(SafeMath.sub(newProduct, K), internalTokenCounts[sides.B]);
-            internalTokenCounts[sides.A] = SafeMath.sub(internalTokenCounts[sides.A], togive);
-        }
-        else {
-            togive = SafeMath.div(SafeMath.sub(newProduct, K), internalTokenCounts[sides.A]);
-            internalTokenCounts[sides.B] = SafeMath.sub(internalTokenCounts[sides.B], togive);
-        }
-
-        K = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]); //update K in case of division remainders
-
-        return togive;
-    }
+    
 }

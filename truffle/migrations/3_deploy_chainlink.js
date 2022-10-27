@@ -29,8 +29,3 @@ module.exports = async function (deployer, network) {
 
   await fundContractWithLink(ChainLinkInst.address, network)
 }
-
-
-// module.exports = async function (deployer) {
-//   await deployer.deploy(ChainLinkAPIConsumer);
-// };
