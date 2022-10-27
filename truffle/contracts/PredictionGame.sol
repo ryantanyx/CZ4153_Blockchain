@@ -125,26 +125,26 @@ contract PredictionGame{
         totalPot = SafeMath.div(SafeMath.mul(address(this).balance, 98), 100);
     }
 
-    function seeBalance()
-        external
-        view
-        returns (
-            uint
-        )
-    {
-        return address(this).balance;
-    }
+    // function seeBalance()
+    //     external
+    //     view
+    //     returns (
+    //         uint
+    //     )
+    // {
+    //     return address(this).balance;
+    // }
 
     // Pass in side of which Internal Tokens you wish to query
-    function seeInternalTokens(Side side)
-        external
-        view
-        returns (
-            uint
-        )
-    {
-        return internalToken.seeInternalTokens(side);
-    }
+    // function seeInternalTokens(Side side)
+    //     external
+    //     view
+    //     returns (
+    //         uint
+    //     )
+    // {
+    //     return internalToken.seeInternalTokens(side);
+    // }
 
     function withdrawWinnings()
         external
