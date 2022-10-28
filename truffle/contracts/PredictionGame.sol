@@ -24,6 +24,7 @@ contract PredictionGame{
     string[] choices;
     
     uint256 private totalPot;
+    uint256 private excess;
     string private winner;
     address public creator;
     PredictionGameStatus public status;
@@ -72,6 +73,7 @@ contract PredictionGame{
         externalTokens[Side.YES] = 0;
         externalTokens[Side.NO] = 0;
         totalPot = 0;
+        excess = 0;
         // reqId = _reqId;
 
         // Initialization for ChainLink
@@ -135,8 +137,9 @@ contract PredictionGame{
         tokenA.mint(address(this), msg.value);
         tokenB.mint(address(this), msg.value);
 
-        //update pot (2% fees)
+        //update pot and lp's share (2% fees)
         totalPot = SafeMath.div(SafeMath.mul(address(this).balance, 98), 100);
+        excess = SafeMath.sub(address(this).balance, totalPot);
     }
 
     // function seeBalance()
@@ -191,6 +194,19 @@ contract PredictionGame{
         betsOfAllPlayers[msg.sender][sidesMap[winner]] = 0;  //signal player has already withdrawn
     }
 
+    function withdrawLiquidity()
+        external
+        payable
+        onlyExpiredGame(true)
+    {
+        require(creator == msg.sender, "You are not the creator of this game!");
+        require(excess > 0, "Liquidity provider's share has already been withdrawn!");
+
+        payable(msg.sender).transfer(excess);
+        
+        excess = 0; //signal lp has already withdrawn
+    }
+
     /**
      * Get Betting Game all public info
      */
@@ -241,6 +257,7 @@ contract PredictionGame{
         bets[side] = SafeMath.add(bets[side], msg.value);                               // Update the bet value on that side
         betsOfAllPlayers[msg.sender][side] = SafeMath.add(betsOfAllPlayers[msg.sender][side], msg.value);       // Update the bet value for the player
         totalPot = SafeMath.add(totalPot, SafeMath.div(SafeMath.mul(msg.value, 98), 100)); //update pot
+        excess = SafeMath.sub(address(this).balance, totalPot); //total lp's share
         
         // Mint the tokens
 
