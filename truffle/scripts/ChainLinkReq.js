@@ -10,7 +10,7 @@ module.exports = async callback => {
     reqId = tx.receipt.logs[0].args[0]
 
     
-    await new Promise(r => setTimeout(r, 60000));
+    await new Promise(r => setTimeout(r, 50000));
     console.log("Waiting for request to be fulfilled...")
     result = await ins.getGamesResolved(reqId)
     console.log("Getting request result address: ", result);
