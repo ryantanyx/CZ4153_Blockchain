@@ -31,8 +31,8 @@ contract PredictionGame{
     address public creator;
     PredictionGameStatus public status;
     uint256 public expiryTime;
-    ERC20Basic private tokenA;
-    ERC20Basic private tokenB;
+    ERC20Basic public tokenA;
+    ERC20Basic public tokenB;
     InternalToken internalToken;
     string private reqId;
     address chainLinkAddr;

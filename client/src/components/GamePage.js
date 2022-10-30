@@ -1,9 +1,31 @@
 import * as React from 'react';
 import { Stack, TextField, ButtonGroup, Button, Box, DialogTitle, IconButton, Grid, Typography, Container, TableContainer, Paper, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { getBarBackground } from '../utils/helper.js';
+import { getToken, getTokenBalance } from '../blockchain/token.js'
 
-const GamePage = ({ onClosePage }) => {
+const GamePage = ({ onClosePage, game, gameInfo, wallet }) => {
     const [choice, setChoice] = React.useState(true);
+    const [bets, setBets] = React.useState(undefined);
+
+    // Init upon render
+    React.useEffect(() => {
+        const init = async () => {
+            // Get player's balance of the tokens
+            const tokenAddressA = await game.tokenA();
+            const tokenA = await getToken(tokenAddressA);
+            const tokenBalanceA = await getTokenBalance(tokenA, wallet);
+            const tokenAddressB = await game.tokenB();
+            const tokenB = await getToken(tokenAddressB);
+            const tokenBalanceB = await getTokenBalance(tokenB, wallet);
+            const bets = {
+                A: tokenBalanceA,
+                B: tokenBalanceB
+            }
+            setBets(bets);
+        }
+        init();
+    }, [game]);
 
     // Get button color based on choice selected
     const getButtonColor = (choiceA) => {
@@ -43,18 +65,18 @@ const GamePage = ({ onClosePage }) => {
                 </IconButton>
             </Grid>
             <Container>
-                <Typography fontWeight="700" variant="h4">Who will win the F1 Driver's Championship?</Typography>
+                <Typography fontWeight="700" variant="h4">{gameInfo.betTitle}</Typography>
                 <Box
                     height={30}
                     mt={2}
-                    style={{ background: 'linear-gradient(to right, #12892193 90%, #FA121193 10%)' }}
+                    style={{ background: getBarBackground(gameInfo) }}
                     sx={{ borderRadius: 1 }}>
                     <Grid container justifyContent="space-between" alignItems="center" height="100%">
-                        <Typography variant="h5" fontWeight={600} ml={1} >Max Verstappen $0.90</Typography>
-                        <Typography variant="h5" fontWeight={600} mr={1}>Charles Leclerc $0.10</Typography>
+                        <Typography variant="h5" fontWeight={600} ml={1} >{gameInfo.choiceA} $0.90</Typography>
+                        <Typography variant="h5" fontWeight={600} mr={1}>{gameInfo.choiceB} $0.10</Typography>
                     </Grid>
                     <Grid container justifyContent="flex-end">
-                        <Typography>Total Pool: $34634576</Typography>
+                        <Typography>Total Pot: {gameInfo.totalPot} ETH</Typography>
                     </Grid>
                 </Box>
                 <Grid container my={2} spacing={2}>
@@ -65,17 +87,17 @@ const GamePage = ({ onClosePage }) => {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell><strong>Shares</strong></TableCell>
-                                        <TableCell><strong>Quantity</strong></TableCell>
+                                        <TableCell><strong>Token Quantity</strong></TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     <TableRow>
-                                        <TableCell>Max Verstappen</TableCell>
-                                        <TableCell>1242356</TableCell>
+                                        <TableCell>{gameInfo.choiceA}</TableCell>
+                                        <TableCell>{bets.A}</TableCell>
                                     </TableRow>
                                     <TableRow>
-                                        <TableCell>Charles Leclerc</TableCell>
-                                        <TableCell>2356</TableCell>
+                                        <TableCell>{gameInfo.choiceB}</TableCell>
+                                        <TableCell>{bets.B}</TableCell>
                                     </TableRow>
                                 </TableBody>
                             </Table>
@@ -89,10 +111,10 @@ const GamePage = ({ onClosePage }) => {
                                 variant="contained"
                                 orientation="vertical"
                                 sx={{ width: '75%' }}>
-                                <Button color={getButtonColor(true)} onClick={() => selectChoice(true)}>Max</Button>
-                                <Button color={getButtonColor(false)} onClick={() => selectChoice(false)}>Charles</Button>
+                                <Button color={getButtonColor(true)} onClick={() => selectChoice(true)}>{gameInfo.choiceA}</Button>
+                                <Button color={getButtonColor(false)} onClick={() => selectChoice(false)}>{gameInfo.choiceB}</Button>
                             </ButtonGroup>
-                            <Typography variant="h6" align="left" sx={{ width: '75%' }}>Quantity</Typography>
+                            <Typography variant="h6" align="left" sx={{ width: '75%' }}>ETH Amount</Typography>
                             <TextField type="number" size="small" sx={{ width: '75%' }} />
                             <Button variant="contained" sx={{ width: '75%' }}>Buy</Button>
                         </Stack>

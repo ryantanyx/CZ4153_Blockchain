@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { Container, Box, Grid, Dialog } from '@mui/material';
+import { Container, Box, Grid } from '@mui/material';
 import GameCard from './GameCard';
-import GamePage from './GamePage';
 
 const GameList = ({ wallet, predictionGames }) => {
     console.log(predictionGames);

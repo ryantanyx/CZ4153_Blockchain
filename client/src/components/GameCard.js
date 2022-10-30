@@ -4,6 +4,7 @@ import { sides } from '../blockchain/predictionGame.js';
 import LiquidityForm from './LiquidityForm';
 import { getEmoji } from '../utils/text.js';
 import GamePage from './GamePage';
+import { getBarBackground } from '../utils/helper.js';
 
 const GameCard = ({ wallet, game }) => {
     const [gameInfo, setGameInfo] = React.useState(undefined);
@@ -43,18 +44,6 @@ const GameCard = ({ wallet, game }) => {
         newGameInfo.liquidityInitialised = true;
         newGameInfo.totalPot = totalPot;
         setGameInfo(newGameInfo);
-    }
-
-    // Returns the odds bar color background
-    const getBarBackground = () => {
-        const green = parseInt(gameInfo.betA);
-        const red = parseInt(gameInfo.betB);
-        if (green + red === 0) {
-            return 'linear-gradient(to right, #12892193 50%, #FA121193 50%)'
-        } 
-        const greenRatio = Math.round((green / (green + red)) * 100);
-        const redRatio = 100 - greenRatio;
-        return 'linear-gradient(to right, #12892193 ' + greenRatio + '%, #FA121193 ' + redRatio + '%)';
     }
 
     // Snackbar
@@ -99,7 +88,7 @@ const GameCard = ({ wallet, game }) => {
                 </Typography>
                 <Box 
                     mt={2}
-                    style={{ background: getBarBackground() }}
+                    style={{ background: getBarBackground(gameInfo) }}
                     sx={{ borderRadius: 1 }}>
                     <Grid container justifyContent="space-between">
                         <Typography fontWeight={600} ml={1} >{gameInfo.choiceA}</Typography>
@@ -139,7 +128,7 @@ const GameCard = ({ wallet, game }) => {
                 <LiquidityForm wallet={wallet} onCloseForm={setOpenLiquidityForm} game={game} initialiseLiquidity={initialiseLiquidity} triggerSnackbar={setOpenSnackbar} />
             </Dialog>
             <Dialog open={openGame} fullWidth={true} maxWidth="md">
-                <GamePage onClosePage={setOpenGame} />
+                <GamePage onClosePage={setOpenGame} game={game} gameInfo={gameInfo} wallet={wallet} />
             </Dialog>
             <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar} TransitionComponent={Slide} >
                 <Alert onClose={handleCloseSnackbar} severity="success" variant="filled" sx={{ width: '100%' }}>
