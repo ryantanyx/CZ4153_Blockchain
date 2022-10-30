@@ -22,10 +22,11 @@ contract PredictionGame{ //is VRFConsumerBase {
     event Withdraw(address winner, address tokenAddress, uint256 tokenAmount);
 
     string public betTitle;
-    string[] choices;
+    string[] public choices;
     uint256 private K; //CPMM invariant
     uint256 public totalPot;
     string public winner;
+    // bool public liquidityInitialised;
 
     address public creator;
     // Side public sides;
@@ -79,6 +80,7 @@ contract PredictionGame{ //is VRFConsumerBase {
         externalTokens[sides.A] = 0;
         externalTokens[sides.B] = 0;
         totalPot = 0;
+        // liquidityInitialised = false;
     }
 
     /**
@@ -146,6 +148,8 @@ contract PredictionGame{ //is VRFConsumerBase {
         public payable
         onlyCreator(true)
     {
+        // require(liquidityInitialised == false, "Liquidity already initialised");
+        // liquidityInitialised = true;
         internalTokenCounts[sides.A] = SafeMath.add(internalTokenCounts[sides.A], msg.value);
         internalTokenCounts[sides.B] = SafeMath.add(internalTokenCounts[sides.B], msg.value);
         K = SafeMath.mul(internalTokenCounts[sides.A], internalTokenCounts[sides.B]);

@@ -12,7 +12,7 @@ import { Container, Box, Typography, Grid, CardMedia, Button, Dialog, CircularPr
 import SendIcon from '@mui/icons-material/Send';
 import banner from "./banner.jpg";
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import { getBlockchain, getPredictionGame } from './ethereum.js';
+import { getBlockchain, getPredictionGame } from './blockchain/ethereum.js';
 
 function App() {
   const [open, setOpen] = React.useState(false);
@@ -76,7 +76,7 @@ function App() {
   }
 
   return (
-    <Box>
+    <Box pb={5}>
       <Navbar />
       <Box>
         <Container fixed>

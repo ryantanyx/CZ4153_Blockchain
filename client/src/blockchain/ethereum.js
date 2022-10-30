@@ -1,7 +1,7 @@
 import { ethers, Contract } from 'ethers';
-import PredictionMarket from './contracts/PredictionMarket.json';
-import PredictionGame from './contracts/PredictionGame.json';
-import ChainLinkAPIConsumer from './contracts/ChainLinkAPIConsumer.json';
+import PredictionMarket from '../contracts/PredictionMarket.json';
+import PredictionGame from '../contracts/PredictionGame.json';
+import ChainLinkAPIConsumer from '../contracts/ChainLinkAPIConsumer.json';
 
 export const getBlockchain = () =>
     new Promise((resolve, reject) => {
