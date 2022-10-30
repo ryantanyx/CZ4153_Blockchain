@@ -1,9 +1,12 @@
 import * as React from 'react';
-import { Typography, Card, CardContent, CardActions, Button, Box, Grid, CircularProgress } from '@mui/material';
-import { sides } from '../blockchain/predictionGame.js'
+import { Typography, Card, CardContent, CardActions, Button, Box, Grid, CircularProgress, Dialog, Snackbar, Alert, Slide } from '@mui/material';
+import { sides } from '../blockchain/predictionGame.js';
+import LiquidityForm from './LiquidityForm';
+import { getEmoji } from '../utils/text.js';
 
-const GameCard = ({ onClickOpenGame, game }) => {
+const GameCard = ({ wallet, onClickOpenGame, game }) => {
     const [gameInfo, setGameInfo] = React.useState(undefined);
+    const [openLiquidityForm, setOpenLiquidityForm] = React.useState(false);
 
     React.useEffect(() => {
         const init = async () => {
@@ -13,6 +16,8 @@ const GameCard = ({ onClickOpenGame, game }) => {
             const totalPot = (await game.totalPot()).toString();
             const betA = (await game.bets(sides.A)).toString();
             const betB = (await game.bets(sides.B)).toString();
+            const liquidityInitialised = await game.liquidityInitialised();
+            const creator = await game.creator();
 
             const gameInfo = {
                 betTitle: betTitle,
@@ -20,7 +25,9 @@ const GameCard = ({ onClickOpenGame, game }) => {
                 choiceB: choiceB,
                 totalPot: totalPot,
                 betA: betA,
-                betB: betB
+                betB: betB,
+                liquidityInitialised: liquidityInitialised,
+                creator: creator
             };
             setGameInfo(gameInfo);
         }
@@ -30,6 +37,14 @@ const GameCard = ({ onClickOpenGame, game }) => {
     const openGame = React.useCallback(() => {
         onClickOpenGame(true);
     }, [onClickOpenGame]);
+
+    // Callback function to update liquidity initialised field
+    const initialiseLiquidity = async (totalPot) => {
+        const newGameInfo = gameInfo;
+        newGameInfo.liquidityInitialised = true;
+        newGameInfo.totalPot = totalPot;
+        setGameInfo(newGameInfo);
+    }
 
     const getBarBackground = () => {
         const green = parseInt(gameInfo.betA);
@@ -41,6 +56,15 @@ const GameCard = ({ onClickOpenGame, game }) => {
         const redRatio = 100 - greenRatio;
         return 'linear-gradient(to right, #12892193 ' + greenRatio + '%, #FA121193 ' + redRatio + '%)';
     }
+
+    // Snackbar
+    const [openSnackbar, setOpenSnackbar] = React.useState(false);
+    const handleCloseSnackbar = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setOpenSnackbar(false);
+    };
 
     // Do not render card until initialised
     if (typeof gameInfo === 'undefined') {
@@ -84,13 +108,41 @@ const GameCard = ({ onClickOpenGame, game }) => {
                 </Box>
                 <Typography mt={1}>Total Pot: {gameInfo.totalPot} ETH</Typography>
             </CardContent>
-            <CardActions>
-                <Grid container justifyContent="flex-end" >
-                    <Button variant="contained" onClick={openGame}>
-                        Bet
-                    </Button>
-                </Grid>
-            </CardActions>
+            {gameInfo.liquidityInitialised ? 
+                <CardActions>
+                    <Grid container justifyContent="flex-end" >
+                        <Button variant="contained" onClick={openGame}>
+                            Bet
+                        </Button>
+                    </Grid>
+                </CardActions>
+            :
+            gameInfo.creator === wallet ? 
+                <CardActions>
+                    <Grid container justifyContent="flex-end" >
+                        <Button variant="contained" onClick={() => setOpenLiquidityForm(true)} >
+                            Provide Liquidity
+                        </Button>
+                    </Grid>
+                </CardActions>
+            :
+                <CardActions>
+                    <Grid container justifyContent="space-between" alignItems="end" >
+                        <Typography color="grey">Cannot bet when liquidity pool is empty!</Typography>
+                        <Button disabled variant="contained" onClick={openGame}>
+                            Bet
+                        </Button>
+                    </Grid>
+                </CardActions>
+            }
+            <Dialog open={openLiquidityForm} fullWidth={true} maxWidth="md">
+                <LiquidityForm wallet={wallet} onCloseForm={setOpenLiquidityForm} game={game} initialiseLiquidity={initialiseLiquidity} triggerSnackbar={setOpenSnackbar} />
+            </Dialog>
+            <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar} TransitionComponent={Slide} >
+                <Alert onClose={handleCloseSnackbar} severity="success" variant="filled" sx={{ width: '100%' }}>
+                    Liquidity added! Players can now place bets on your game! {getEmoji(0x1F525)}{getEmoji(0x1F525)}{getEmoji(0x1F525)}
+                </Alert>
+            </Snackbar>
         </Card>
     )   
 }

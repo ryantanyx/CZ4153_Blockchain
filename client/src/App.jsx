@@ -110,7 +110,7 @@ function App() {
       <Dialog open={open} fullWidth={true} maxWidth="md">
         <CreateGameForm onCloseForm={setOpen} />
       </Dialog>
-      <GameList predictionGames={predictionGames} />
+      <GameList wallet={userAddress} predictionGames={predictionGames} />
     </Box>
   );
 }

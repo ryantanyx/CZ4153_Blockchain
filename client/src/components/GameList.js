@@ -3,7 +3,7 @@ import { Container, Box, Grid, Dialog } from '@mui/material';
 import GameCard from './GameCard';
 import GamePage from './GamePage';
 
-const GameList = ({ predictionGames }) => {
+const GameList = ({ wallet, predictionGames }) => {
     const [openGame, setOpenGame] = React.useState(false);
 
     console.log(predictionGames);
@@ -15,7 +15,7 @@ const GameList = ({ predictionGames }) => {
                     {
                         predictionGames != null && predictionGames.map((game) => 
                             <Grid item xs={3}>
-                                <GameCard onClickOpenGame={setOpenGame} game={game} />
+                                <GameCard wallet={wallet} onClickOpenGame={setOpenGame} game={game} />
                             </Grid>
                         )
                     }

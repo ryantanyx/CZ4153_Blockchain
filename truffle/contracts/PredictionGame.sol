@@ -23,10 +23,10 @@ contract PredictionGame{
     string public betTitle;
     string[] public choices;
     
-    uint256 private totalPot;
+    uint256 public totalPot;
     uint256 private excess;
     string private winner;
-    // bool public liquidityInitialised;
+    bool public liquidityInitialised;
 
     address public creator;
     PredictionGameStatus public status;
@@ -42,9 +42,9 @@ contract PredictionGame{
     // Result public result;
 
     mapping(string => Side) public sidesMap;
-    mapping(Side => uint256) private bets;
+    mapping(Side => uint256) public bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
-    mapping(address => mapping(Side => uint256)) private betsOfAllPlayers;
+    mapping(address => mapping(Side => uint256)) public betsOfAllPlayers;
 
     mapping(Side => uint256) externalTokens;
 
@@ -75,7 +75,7 @@ contract PredictionGame{
         externalTokens[Side.YES] = 0;
         externalTokens[Side.NO] = 0;
         totalPot = 0;
-        // liquidityInitialised = false;
+        liquidityInitialised = false;
         excess = 0;
         // reqId = _reqId;
 
@@ -133,9 +133,9 @@ contract PredictionGame{
         external payable
         onlyExpiredGame(false)
     {
-        // require(liquidityInitialised == false, "Liquidity already initialised");
-        // liquidityInitialised = true;
+        require(liquidityInitialised == false, "Liquidity already initialised");
         require(creator == msg.sender, "You are not the creator of this game!");
+        liquidityInitialised = true;
         internalToken.setValue(msg.value);
 
         // Mint the tokens
