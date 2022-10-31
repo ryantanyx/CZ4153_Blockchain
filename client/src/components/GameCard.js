@@ -10,6 +10,7 @@ const GameCard = ({ wallet, game }) => {
     const [gameInfo, setGameInfo] = React.useState(undefined);
     const [openLiquidityForm, setOpenLiquidityForm] = React.useState(false);
     const [openGame, setOpenGame] = React.useState(false);
+    const [currentTime, setCurrentTime] = React.useState(Math.round(Date.now()/1000));
 
     // Init upon render
     React.useEffect(() => {
@@ -101,7 +102,7 @@ const GameCard = ({ wallet, game }) => {
             gameInfo.creator === wallet ? 
                 <CardActions>
                     <Grid container justifyContent="flex-end" >
-                        <Button variant="contained" onClick={() => setOpenLiquidityForm(true)} >
+                        <Button disabled={currentTime>=gameInfo.expiryTime} variant="contained" onClick={() => setOpenLiquidityForm(true)} >
                             Provide Liquidity
                         </Button>
                     </Grid>

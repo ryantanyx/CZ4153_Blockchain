@@ -12,6 +12,7 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
     const [bets, setBets] = React.useState(undefined);
     const [amount, setAmount] = React.useState("0");
     const [errorMessage, setErrorMessage] = React.useState("");
+    const [currentTime, setCurrentTime] = React.useState(Math.round(Date.now()/1000));
 
     // Init upon render
     React.useEffect(() => {
@@ -86,6 +87,30 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
         }
     }
 
+    // Call smart contract to withdraw winnings
+    const withdrawWinnings = async () => {
+        // Check if winner already resolved
+        if (gameInfo.winner === "") {
+            // Try to resolve winner
+            
+        } else {
+            try {
+                await game.withdrawWinnings()
+            } catch (error) {
+                console.log("Error: " + error.message);
+            }
+        }
+    }
+
+    // Call smart contract to withdraw liquidity
+    const withdrawLiquidity = async () => {
+        try {
+            await game.withdrawLiquidity()
+        } catch (error) {
+            console.log("Error: " + error.message);
+        }
+    }
+
     return (
         <Box>
             <Grid container justifyContent="space-between" >
@@ -132,6 +157,14 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                                 </TableBody>
                             </Table>
                         </TableContainer>
+                        <Stack mt={2} direction="row" space={4} style={{ display: "flex" }} justifyContent="space-between" >
+                            <Box sx={{ width: "49%" }}>
+                                <Button disabled={currentTime<gameInfo.expiryTime} variant="contained" onClick={withdrawWinnings} sx={{ width: "100%" }}>Withdraw Winnings</Button>
+                            </Box>
+                            <Box sx={{ width: "49%" }}>
+                                <Button disabled={currentTime<gameInfo.expiryTime || gameInfo.creator !== wallet} variant="contained" onClick={withdrawLiquidity} sx={{ width: "100%" }}>Withdraw Liquidity</Button>
+                            </Box>
+                        </Stack>
                     </Grid>
                     <Grid item xs={6}>
                         <Typography variant="h5" fontWeight={600}>Place your bets!</Typography>

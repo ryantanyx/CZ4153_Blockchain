@@ -15,6 +15,10 @@ export const getGameInfo = async (game) => {
     const creator = await game.creator();
     const internalTokenA = await game.seeInternalTokens(sides.A);
     const internalTokenB = await game.seeInternalTokens(sides.B);
+    const expiryTime = (await game.expiryTime()).toString();
+    const winner = await game.winner();
+    const sportId = await game.sportId();
+    const gameId = await game.gameId();
 
     const gameInfo = {
         betTitle: betTitle,
@@ -26,7 +30,11 @@ export const getGameInfo = async (game) => {
         liquidityInitialised: liquidityInitialised,
         creator: creator,
         internalTokenA: internalTokenA,
-        internalTokenB: internalTokenB
+        internalTokenB: internalTokenB,
+        expiryTime: expiryTime,
+        winner: winner,
+        sportId: sportId,
+        gameId: gameId
     };
     return gameInfo;
 }

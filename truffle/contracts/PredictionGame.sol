@@ -8,6 +8,7 @@ import "./ChainLink.sol";
 import "./InternalToken.sol";
 import "./ERC20Basic.sol";
 import "./enums/Side.sol";
+import "./SharedStructs.sol";
 
 contract PredictionGame{
     using SafeMath for uint256;
@@ -25,7 +26,9 @@ contract PredictionGame{
     
     uint256 public totalPot;
     uint256 private excess;
-    string private winner;
+    string public winner;
+    string public sportId;
+    string public gameId;
     bool public liquidityInitialised;
 
     address public creator;
@@ -51,26 +54,29 @@ contract PredictionGame{
 
     constructor(
         address _creator,
-        uint256 _expiryTime,
+        // uint256 _expiryTime,
         address _TokenAAddress,
         address _TokenBAddress,
-        string memory _betTitle,
-        string memory _choiceA,     // Home Team
-        string memory _choiceB     // Away Team
+        // string memory _betTitle,
+        // string memory _choiceA,     // Home Team
+        // string memory _choiceB,     // Away Team,
+        // string memory _sportId,
+        // string memory _gameId,
+        SharedStructs.Payload memory _payload
         // string memory _reqId,
         // address _chainLinkAddr,
         // uint _gameTypeId
     ){
         creator = _creator;
         status = PredictionGameStatus.OPEN;
-        expiryTime = _expiryTime;
+        expiryTime = _payload.expiryDate;
         tokenA = ERC20Basic(_TokenAAddress);
         tokenB = ERC20Basic(_TokenBAddress);
-        betTitle = _betTitle;
-        sidesMap[_choiceA] = Side.YES;
-        choices.push(_choiceA);
-        sidesMap[_choiceB] = Side.NO;
-        choices.push(_choiceB);
+        betTitle = _payload.betTitle;
+        sidesMap[_payload.choiceA] = Side.YES;
+        choices.push(_payload.choiceA);
+        sidesMap[_payload.choiceB] = Side.NO;
+        choices.push(_payload.choiceB);
         internalToken = new InternalToken(0, address(this));
         externalTokens[Side.YES] = 0;
         externalTokens[Side.NO] = 0;
@@ -81,6 +87,8 @@ contract PredictionGame{
 
         // Initialization for ChainLink
         winner = "";
+        sportId = _payload.sportId;
+        gameId = _payload.gameId;
         // chainLinkAddr = _chainLinkAddr;
         // gameTypeId  = _gameTypeId;
     }
