@@ -3,9 +3,10 @@ import { Box, Grid, DialogTitle, IconButton, Stack, Typography, TextField, Butto
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import { isInt } from '../utils/math.js';
+import { getEmoji } from '../utils/text.js';
 
 const LiquidityForm = ({ wallet, onCloseForm, game, initialiseLiquidity, triggerSnackbar }) => {
-    const [liquidity, setLiquidity] = React.useState(0);
+    const [liquidity, setLiquidity] = React.useState("0");
     const [errorMessage, setErrorMessage] = React.useState("");
 
     // Close the form
@@ -17,7 +18,7 @@ const LiquidityForm = ({ wallet, onCloseForm, game, initialiseLiquidity, trigger
     const addLiquidity = async () => {
         setErrorMessage("");
 
-        if (liquidity === "" || liquidity === null || liquidity === 0) {
+        if (liquidity === "" || liquidity === null || liquidity === "0") {
             // Check if blank or zero
             setErrorMessage("Please enter a non-zero value!")
         } else if (!isInt(liquidity)) {
@@ -34,17 +35,12 @@ const LiquidityForm = ({ wallet, onCloseForm, game, initialiseLiquidity, trigger
                 // Close form
                 closeLiquidityForm();
                 // Open success snackbar
-                openSnackbar();
+                triggerSnackbar("success", `Liquidity added! Players can now place bets on your game! ${getEmoji(0x1F525)}${getEmoji(0x1F525)}${getEmoji(0x1F525)}`);
             } catch (error) {
                 console.log("Error: " + error.message);
             }
         }
     }
-
-    // Open success snackbar
-    const openSnackbar = React.useCallback(() => {
-        triggerSnackbar(true);
-    }, [triggerSnackbar]);
 
     return (
         <Box component="form" sx={{ mx: 2}}>

@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { Typography, Card, CardContent, CardActions, Button, Box, Grid, CircularProgress, Dialog, Snackbar, Alert, Slide } from '@mui/material';
-import { sides } from '../blockchain/predictionGame.js';
+import { Typography, Card, CardContent, CardActions, Button, Box, Grid, CircularProgress, Dialog } from '@mui/material';
+import { getGameInfo } from '../blockchain/predictionGame.js';
 import LiquidityForm from './LiquidityForm';
-import { getEmoji } from '../utils/text.js';
 import GamePage from './GamePage';
 import { getBarBackground } from '../utils/helper.js';
+import SnackBar from './SnackBar';
 
 const GameCard = ({ wallet, game }) => {
     const [gameInfo, setGameInfo] = React.useState(undefined);
@@ -14,25 +14,7 @@ const GameCard = ({ wallet, game }) => {
     // Init upon render
     React.useEffect(() => {
         const init = async () => {
-            const betTitle = await game.betTitle();
-            const choiceA = await game.choices(0);
-            const choiceB = await game.choices(1);
-            const totalPot = (await game.totalPot()).toString();
-            const betA = (await game.bets(sides.A)).toString();
-            const betB = (await game.bets(sides.B)).toString();
-            const liquidityInitialised = await game.liquidityInitialised();
-            const creator = await game.creator();
-
-            const gameInfo = {
-                betTitle: betTitle,
-                choiceA: choiceA,
-                choiceB: choiceB,
-                totalPot: totalPot,
-                betA: betA,
-                betB: betB,
-                liquidityInitialised: liquidityInitialised,
-                creator: creator
-            };
+            const gameInfo = await getGameInfo(game);
             setGameInfo(gameInfo);
         }
         init();
@@ -47,7 +29,17 @@ const GameCard = ({ wallet, game }) => {
     }
 
     // Snackbar
+    const [snackbarInfo, setSnackbarInfo] = React.useState(undefined);
     const [openSnackbar, setOpenSnackbar] = React.useState(false);
+    const updateSnackbar = (severity, message) => {
+        const snackbarInfo = {
+            severity: severity,
+            message: message
+        };
+        setSnackbarInfo(snackbarInfo);
+        setOpenSnackbar(true);
+    }
+
     const handleCloseSnackbar = (event, reason) => {
         if (reason === 'clickaway') {
             return;
@@ -125,16 +117,12 @@ const GameCard = ({ wallet, game }) => {
                 </CardActions>
             }
             <Dialog open={openLiquidityForm} fullWidth={true} maxWidth="md">
-                <LiquidityForm wallet={wallet} onCloseForm={setOpenLiquidityForm} game={game} initialiseLiquidity={initialiseLiquidity} triggerSnackbar={setOpenSnackbar} />
+                <LiquidityForm wallet={wallet} onCloseForm={setOpenLiquidityForm} game={game} initialiseLiquidity={initialiseLiquidity} triggerSnackbar={updateSnackbar} />
             </Dialog>
             <Dialog open={openGame} fullWidth={true} maxWidth="md">
-                <GamePage onClosePage={setOpenGame} game={game} gameInfo={gameInfo} wallet={wallet} />
+                <GamePage onClosePage={setOpenGame} game={game} gameInfo={gameInfo} wallet={wallet} updateGameInfo={setGameInfo} triggerSnackbar={updateSnackbar} />
             </Dialog>
-            <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar} TransitionComponent={Slide} >
-                <Alert onClose={handleCloseSnackbar} severity="success" variant="filled" sx={{ width: '100%' }}>
-                    Liquidity added! Players can now place bets on your game! {getEmoji(0x1F525)}{getEmoji(0x1F525)}{getEmoji(0x1F525)}
-                </Alert>
-            </Snackbar>
+            { snackbarInfo && <SnackBar severity={snackbarInfo.severity} message={snackbarInfo.message} openSnackbar={openSnackbar} handleCloseSnackbar={handleCloseSnackbar} /> }
         </Card>
     )   
 }

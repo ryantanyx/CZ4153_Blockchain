@@ -1,12 +1,17 @@
 import * as React from 'react';
-import { Stack, TextField, ButtonGroup, Button, Box, DialogTitle, IconButton, Grid, Typography, Container, TableContainer, Paper, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+import { Stack, TextField, ButtonGroup, Button, Box, DialogTitle, IconButton, Grid, Typography, Container, TableContainer, Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { getBarBackground } from '../utils/helper.js';
 import { getToken, getTokenBalance } from '../blockchain/token.js'
+import { isInt } from '../utils/math.js';
+import { getGameInfo } from '../blockchain/predictionGame.js';
+import { getEmoji } from '../utils/text.js';
 
-const GamePage = ({ onClosePage, game, gameInfo, wallet }) => {
+const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, triggerSnackbar }) => {
     const [choice, setChoice] = React.useState(true);
     const [bets, setBets] = React.useState(undefined);
+    const [amount, setAmount] = React.useState("0");
+    const [errorMessage, setErrorMessage] = React.useState("");
 
     // Init upon render
     React.useEffect(() => {
@@ -25,7 +30,7 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet }) => {
             setBets(bets);
         }
         init();
-    }, [game]);
+    }, [game, wallet, gameInfo]);
 
     // Get button color based on choice selected
     const getButtonColor = (choiceA) => {
@@ -55,6 +60,31 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet }) => {
     const closeGamePage = React.useCallback(() => {
         onClosePage(false);
     }, [onClosePage]);
+
+    // Call smart contract to place bet
+    const placeBet = async () => {
+        setErrorMessage("");
+
+        if (amount === "" || amount === null || amount === "0") {
+            // Check if blank or zero
+            setErrorMessage("Please enter a non-zero value!");
+        } else if (!isInt(amount)) {
+            setErrorMessage("Number of Wei cannot be a decimal!")
+        } else {
+            try {
+                // Call smart contract
+                const playerChoice = choice ? gameInfo.choiceA : gameInfo.choiceB;
+                await game.placeBet(playerChoice, {value: amount});
+                // Update game info in gamecard
+                const newGameInfo = await getGameInfo(game);
+                updateGameInfo(newGameInfo);
+                // Open success snackbar
+                triggerSnackbar("success", `Successfully placed bet! Hope your bets will take you to the moon! ${getEmoji(0x1F680)}${getEmoji(0x1F680)}${getEmoji(0x1F680)}`);
+            } catch (error) {
+                console.log("Error: " + error.message);
+            }
+        }
+    }
 
     return (
         <Box>
@@ -93,11 +123,11 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet }) => {
                                 <TableBody>
                                     <TableRow>
                                         <TableCell>{gameInfo.choiceA}</TableCell>
-                                        <TableCell>{bets.A}</TableCell>
+                                        <TableCell>{typeof bets === 'undefined' ? <CircularProgress size='10px'/> : bets.A}</TableCell>
                                     </TableRow>
                                     <TableRow>
                                         <TableCell>{gameInfo.choiceB}</TableCell>
-                                        <TableCell>{bets.B}</TableCell>
+                                        <TableCell>{typeof bets === 'undefined' ? <CircularProgress size='10px'/> : bets.B}</TableCell>
                                     </TableRow>
                                 </TableBody>
                             </Table>
@@ -115,8 +145,16 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet }) => {
                                 <Button color={getButtonColor(false)} onClick={() => selectChoice(false)}>{gameInfo.choiceB}</Button>
                             </ButtonGroup>
                             <Typography variant="h6" align="left" sx={{ width: '75%' }}>ETH Amount</Typography>
-                            <TextField type="number" size="small" sx={{ width: '75%' }} />
-                            <Button variant="contained" sx={{ width: '75%' }}>Buy</Button>
+                            <TextField 
+                                type="number"
+                                size="small"
+                                sx={{ width: '75%' }}
+                                error={errorMessage !== ""}
+                                id="outlined-error-helper-text"
+                                helperText={errorMessage}
+                                onChange={(e) => setAmount(e.target.value)}    
+                            />
+                            <Button variant="contained" sx={{ width: '75%' }} onClick={placeBet}>Buy</Button>
                         </Stack>
                     </Grid>
                 </Grid>

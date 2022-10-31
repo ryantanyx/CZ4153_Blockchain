@@ -1,11 +1,11 @@
 // Returns the odds bar color background
 export const getBarBackground = (gameInfo) => {
-    const green = parseInt(gameInfo.betA);
-    const red = parseInt(gameInfo.betB);
+    // Ratio of green to red is inverse of ratio of internal tokens A to B
+    const green = parseInt(gameInfo.internalTokenB);
+    const red = parseInt(gameInfo.internalTokenA);
     if (green + red === 0) {
         return 'linear-gradient(to right, #12892193 50%, #FA121193 50%)'
     } 
     const greenRatio = Math.round((green / (green + red)) * 100);
-    const redRatio = 100 - greenRatio;
-    return 'linear-gradient(to right, #12892193 ' + greenRatio + '%, #FA121193 ' + redRatio + '%)';
+    return 'linear-gradient(to right, #12892193 0% ' + greenRatio + '%, #FA121193 ' + greenRatio + '% 100%)';
 }

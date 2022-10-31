@@ -158,15 +158,15 @@ contract PredictionGame{
     // }
 
     // Pass in side of which Internal Tokens you wish to query
-    // function seeInternalTokens(Side side)
-    //     external
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return internalToken.seeInternalTokens(side);
-    // }
+    function seeInternalTokens(Side side)
+        external
+        view
+        returns (
+            uint
+        )
+    {
+        return internalToken.seeInternalTokens(side);
+    }
 
     function withdrawWinnings()
         external
