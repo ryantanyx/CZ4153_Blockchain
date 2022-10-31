@@ -46,3 +46,10 @@ export const getPredictionGame = (gameAddress) =>
         );
         resolve(predictionGame);
     })
+
+// Returns transaction receipt of a transaction given the transaction hash
+export const getTransactionReceipt = async (txHash) => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const txReceipt = await provider.getTransactionReceipt(txHash);
+    return txReceipt;
+}

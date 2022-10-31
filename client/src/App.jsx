@@ -108,7 +108,7 @@ function App() {
         </Container>
       </Box>
       <Dialog open={open} fullWidth={true} maxWidth="md">
-        <CreateGameForm onCloseForm={setOpen} />
+        <CreateGameForm onCloseForm={setOpen} oracle={oracle} />
       </Dialog>
       <GameList wallet={userAddress} predictionGames={predictionGames} />
     </Box>
