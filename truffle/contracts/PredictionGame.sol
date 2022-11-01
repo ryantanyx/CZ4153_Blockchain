@@ -21,7 +21,7 @@ contract PredictionGame{
     event Withdraw(address winner, address tokenAddress, uint256 tokenAmount);
 
     string public betTitle;
-    string[] choices;
+    string[] public choices;
     
     uint256 private totalPot;
     uint256 private excess;
