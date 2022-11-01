@@ -54,9 +54,9 @@ module.exports = {
       network_id: 5, // eslint-disable-line camelcase
       chain_id: 5,
       gas: 5500000,        // Gas limit used for deploys.
-      confirmations: 2,    // # of confirmations to wait between deployments. (default: 0)
+      confirmations: 0,    // # of confirmations to wait between deployments. (default: 0)
       networkCheckTimeout: 10000,
-      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      timeoutBlocks: 50,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true
     },
     //

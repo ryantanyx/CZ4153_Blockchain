@@ -28,8 +28,7 @@ contract('ChainLinkAPIConsumer contract', (deployer, network, accounts) => {
   });
 
   it('should send a request to ChainLink', async () => {
-    const msg = {from: "0xbE4874f8D8dB230ebBDEA9d720772FF9a40DE493", value: web3.utils.toWei("0.1")}; 
-    const transaction = await chainLink.requestGames("100000000000000000", "resolve", 11, 1665842400, msg)
+    const transaction = await chainLink.requestSpecificGames("100000000000000000", "resolve", 11, 1665842400, ["0x6466303138303533646630616636356331306136396633616565643661376531"])
     const requestId = transaction.logs[0].args["requestId"]
     console.log("requestId: ", requestId)
       
