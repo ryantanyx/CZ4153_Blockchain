@@ -91,15 +91,15 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
     const withdrawWinnings = async () => {
         // Check if winner already resolved
         if (gameInfo.winner === "") {
-            // TODO: Try to resolve winner
-            
-            // If managed to resolve winner, then update winner and withdraw the winnings
+            // Show error snack bar
+            triggerSnackbar("error", `Winner hasn't been resolved yet! ${getEmoji(0x1F440)}${getEmoji(0x1F440)}${getEmoji(0x1F440)}`);
         } else {
             try {
                 await game.withdrawWinnings()
             } catch (error) {
                 console.log("Error: " + error.message);
                 // Show error snack bar
+                triggerSnackbar("error", `You have no winnings to withdraw! ${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}`);
             }
         }
     }
@@ -124,15 +124,15 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                 </IconButton>
             </Grid>
             <Container>
-                <Typography fontWeight="700" variant="h4">{gameInfo.betTitle}</Typography>
+                <Typography fontWeight="700" variant="h4">{(currentTime >= gameInfo.expiryTime) ? "[CLOSED] " : ""}{gameInfo.betTitle}</Typography>
                 <Box
                     height={30}
                     mt={2}
                     style={{ background: getBarBackground(gameInfo) }}
                     sx={{ borderRadius: 1 }}>
                     <Grid container justifyContent="space-between" alignItems="center" height="100%">
-                        <Typography variant="h5" fontWeight={600} ml={1} >{gameInfo.choiceA} $0.90</Typography>
-                        <Typography variant="h5" fontWeight={600} mr={1}>{gameInfo.choiceB} $0.10</Typography>
+                        <Typography variant="h5" fontWeight={600} ml={1} >{gameInfo.choiceA}{(gameInfo.winner === gameInfo.choiceA ? getEmoji(0x1F451) : "")}</Typography>
+                        <Typography variant="h5" fontWeight={600} mr={1}>{(gameInfo.winner === gameInfo.choiceB ? getEmoji(0x1F451) : "")}{gameInfo.choiceB}</Typography>
                     </Grid>
                     <Grid container justifyContent="flex-end">
                         <Typography>Total Pot: {gameInfo.totalPot} ETH</Typography>

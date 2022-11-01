@@ -77,7 +77,7 @@ function App() {
 
   return (
     <Box pb={5}>
-      <Navbar />
+      <Navbar wallet={userAddress} />
       <Box>
         <Container fixed>
           <Grid container spacing={2} sx={{ my: 3 }} alignItems="center">

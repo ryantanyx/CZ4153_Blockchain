@@ -77,7 +77,7 @@ const GameCard = ({ wallet, game }) => {
         <Card>
             <CardContent>
                 <Typography fontWeight={700} sx={{ fontSize: 14 }} gutterBottom>
-                    {gameInfo.betTitle}
+                    {(currentTime >= gameInfo.expiryTime) ? "[CLOSED] " : ""}{gameInfo.betTitle}
                 </Typography>
                 <Box 
                     mt={2}
