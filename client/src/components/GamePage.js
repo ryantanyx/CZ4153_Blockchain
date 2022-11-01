@@ -91,23 +91,27 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
     const withdrawWinnings = async () => {
         // Check if winner already resolved
         if (gameInfo.winner === "") {
-            // Try to resolve winner
+            // TODO: Try to resolve winner
             
+            // If managed to resolve winner, then update winner and withdraw the winnings
         } else {
             try {
                 await game.withdrawWinnings()
             } catch (error) {
                 console.log("Error: " + error.message);
+                // Show error snack bar
             }
         }
     }
 
-    // Call smart contract to withdraw liquidity
+    // Call smart contract to withdraw liquidity (doesn't need winner to be resolved yet, as long as game is closed)
     const withdrawLiquidity = async () => {
         try {
-            await game.withdrawLiquidity()
+            await game.withdrawLiquidity();
         } catch (error) {
             console.log("Error: " + error.message);
+            // Show error snack bar
+            triggerSnackbar("error", `You have no liquidity to withdraw! ${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}`);
         }
     }
 
@@ -187,7 +191,7 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                                 helperText={errorMessage}
                                 onChange={(e) => setAmount(e.target.value)}    
                             />
-                            <Button variant="contained" sx={{ width: '75%' }} onClick={placeBet}>Buy</Button>
+                            <Button disabled={currentTime>=gameInfo.expiryTime} variant="contained" sx={{ width: '75%' }} onClick={placeBet}>Buy</Button>
                         </Stack>
                     </Grid>
                 </Grid>
