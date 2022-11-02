@@ -1,0 +1,20 @@
+{
+    "mapping" : {
+        "NCAA Men's Football": 1,
+        "NFL": 2,
+        "MLB": 3,
+        "NBA": 4,
+        "NCAA Men's Basketball": 5,
+        "NHL": 6,
+        "WNBA": 8,
+        "MLS": 10,
+        "EPL": 11,
+        "Ligue 1": 12,
+        "Bundesliga": 13,
+        "La Liga": 14,
+        "Serie A": 15,
+        "UEFA Champions League": 16
+    },
+    "sports": ["NCAA Men's Football", "NFL", "MLB", "NBA", "NCAA Men's Basketball", "NHL", "WNBA", "MLS", "EPL", "Ligue 1", "Bundesliga", "La Liga", "Serie A", "UEFA Champions League"],
+    "ids": [1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15, 16]
+}

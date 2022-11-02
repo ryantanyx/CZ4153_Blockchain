@@ -8,6 +8,7 @@ import "./ChainLink.sol";
 import "./InternalToken.sol";
 import "./ERC20Basic.sol";
 import "./enums/Side.sol";
+import "./SharedStructs.sol";
 
 contract PredictionGame{
     using SafeMath for uint256;
@@ -21,16 +22,20 @@ contract PredictionGame{
     event Withdraw(address winner, address tokenAddress, uint256 tokenAmount);
 
     string public betTitle;
-    string[] choices;
+    string[] public choices;
     
-    uint256 private totalPot;
+    uint256 public totalPot;
     uint256 private excess;
-    string private winner;
+    string public winner;
+    string public sportId;
+    string public gameId;
+    bool public liquidityInitialised;
+
     address public creator;
     PredictionGameStatus public status;
     uint256 public expiryTime;
-    ERC20Basic private tokenA;
-    ERC20Basic private tokenB;
+    ERC20Basic public tokenA;
+    ERC20Basic public tokenB;
     InternalToken internalToken;
     string private reqId;
     address chainLinkAddr;
@@ -40,44 +45,50 @@ contract PredictionGame{
     // Result public result;
 
     mapping(string => Side) public sidesMap;
-    mapping(Side => uint256) private bets;
+    mapping(Side => uint256) public bets;
     mapping(bytes32 => address) requestIdToAddressRegistry;
-    mapping(address => mapping(Side => uint256)) private betsOfAllPlayers;
+    mapping(address => mapping(Side => uint256)) public betsOfAllPlayers;
 
     mapping(Side => uint256) externalTokens;
 
 
     constructor(
         address _creator,
-        uint256 _expiryTime,
+        // uint256 _expiryTime,
         address _TokenAAddress,
         address _TokenBAddress,
-        string memory _betTitle,
-        string memory _choiceA,     // Home Team
-        string memory _choiceB     // Away Team
+        // string memory _betTitle,
+        // string memory _choiceA,     // Home Team
+        // string memory _choiceB,     // Away Team,
+        // string memory _sportId,
+        // string memory _gameId,
+        SharedStructs.Payload memory _payload
         // string memory _reqId,
         // address _chainLinkAddr,
         // uint _gameTypeId
     ){
         creator = _creator;
         status = PredictionGameStatus.OPEN;
-        expiryTime = _expiryTime;
+        expiryTime = _payload.expiryDate;
         tokenA = ERC20Basic(_TokenAAddress);
         tokenB = ERC20Basic(_TokenBAddress);
-        betTitle = _betTitle;
-        sidesMap[_choiceA] = Side.YES;
-        choices.push(_choiceA);
-        sidesMap[_choiceB] = Side.NO;
-        choices.push(_choiceB);
+        betTitle = _payload.betTitle;
+        sidesMap[_payload.choiceA] = Side.YES;
+        choices.push(_payload.choiceA);
+        sidesMap[_payload.choiceB] = Side.NO;
+        choices.push(_payload.choiceB);
         internalToken = new InternalToken(0, address(this));
         externalTokens[Side.YES] = 0;
         externalTokens[Side.NO] = 0;
         totalPot = 0;
+        liquidityInitialised = false;
         excess = 0;
         // reqId = _reqId;
 
         // Initialization for ChainLink
         winner = "";
+        sportId = _payload.sportId;
+        gameId = _payload.gameId;
         // chainLinkAddr = _chainLinkAddr;
         // gameTypeId  = _gameTypeId;
     }
@@ -130,7 +141,9 @@ contract PredictionGame{
         external payable
         onlyExpiredGame(false)
     {
+        require(liquidityInitialised == false, "Liquidity already initialised");
         require(creator == msg.sender, "You are not the creator of this game!");
+        liquidityInitialised = true;
         internalToken.setValue(msg.value);
 
         // Mint the tokens
@@ -153,15 +166,15 @@ contract PredictionGame{
     // }
 
     // Pass in side of which Internal Tokens you wish to query
-    // function seeInternalTokens(Side side)
-    //     external
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return internalToken.seeInternalTokens(side);
-    // }
+    function seeInternalTokens(Side side)
+        external
+        view
+        returns (
+            uint
+        )
+    {
+        return internalToken.seeInternalTokens(side);
+    }
 
     function withdrawWinnings()
         external

@@ -23,8 +23,8 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
 
     error FailedTransferLINK(address to, uint256 amount);
 
-    event RequestSent(Chainlink.Request req);
-    event GameRequestFulfilled(bytes32 requestId);
+    // event RequestSent(Chainlink.Request req);
+    // event GameRequestFulfilled(bytes32 requestId);
     bytes32 private immutable jobId;
     uint256 private immutable fee;
 
@@ -63,7 +63,7 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
 
     function fulfillGames(bytes32 _requestId, bytes[] memory _games) external recordChainlinkFulfillment(_requestId) {
         requestIdGames[_requestId] = _games;
-        emit GameRequestFulfilled(_requestId);
+        // emit GameRequestFulfilled(_requestId);
     }
 
     /**
@@ -86,7 +86,7 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
         req.addUint("date", _date);
         req.add("market", _market);
         req.addUint("sportId", _sportId);
-        emit RequestSent(req);
+        // emit RequestSent(req);
         return sendOperatorRequestTo(chainlinkOracleAddress() ,req, _payment);
         
     }
