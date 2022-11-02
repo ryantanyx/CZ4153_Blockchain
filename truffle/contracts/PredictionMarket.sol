@@ -9,17 +9,11 @@ import "./PredictionGame.sol";
 import "./ERC20Basic.sol";
 import "./enums/Side.sol";
 import "./GameContractFactory.sol";
+import "./SharedStructs.sol";
 
 contract PredictionMarket is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-
-    struct Payload{
-        string betTitle;
-        uint256 expiryDate;
-        string choiceA;
-        string choiceB;
-    }
 
     event PredictionGameCreated(
         uint256 predictionGameId,
@@ -29,7 +23,7 @@ contract PredictionMarket is Ownable {
         address TokenBAddress
     );
 
-    uint256 private predictionGameCount;
+    uint256 public predictionGameCount;
     mapping(uint256 => address) public predictionMarketRegistry;
     address private chainLinkAddress;
     GameContractFactory private gameFactory;
@@ -46,7 +40,7 @@ contract PredictionMarket is Ownable {
     /**
      * Create new `PredictionGame` instance
      */
-    function createGame(Payload memory payload) external {
+    function createGame(SharedStructs.Payload memory payload) external {
         // 1. Create the game tokens
         string memory tokenAName = string(abi.encodePacked("PredictionGameTokenA", Strings.toString(predictionGameCount)));
         string memory tokenASymbol = string(abi.encodePacked("A", Strings.toString(predictionGameCount)));
@@ -65,12 +59,15 @@ contract PredictionMarket is Ownable {
         // 2. Create new `PredictionGame` smart contract
         PredictionGame newPredictionGame = gameFactory.createGameContract(
             msg.sender,
-            payload.expiryDate,
+            // payload,
             address(TokenA),
             address(TokenB),
-            payload.betTitle,
-            payload.choiceA,
-            payload.choiceB
+            // payload.betTitle,
+            // payload.choiceA,
+            // payload.choiceB,
+            // payload.sportId,
+            // payload.gameId
+            payload
         );
         address newPredictionGameAddr = address(newPredictionGame);
         predictionMarketRegistry[predictionGameCount] = newPredictionGameAddr;

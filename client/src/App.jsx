@@ -8,20 +8,76 @@ import "./App.css";
 import Navbar from "./components/Navbar";
 import CreateGameForm from "./components/CreateGameForm";
 import GameList from "./components/GameList";
-import { Container, Box, Typography, Grid, CardMedia, Button, Dialog } from '@mui/material';
+import { Container, Box, Typography, Grid, CardMedia, Button, Dialog, CircularProgress, Stack } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import banner from "./banner.jpg";
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import { getBlockchain, getPredictionGame } from './blockchain/ethereum.js';
 
 function App() {
   const [open, setOpen] = React.useState(false);
+  const [userAddress, setUserAddress] = React.useState(undefined);
+  const [predictionMarket, setPredictionMarket] = React.useState(undefined);
+  const [oracle, setOracle] = React.useState(undefined);
+  const [predictionGames, setPredictionGames] = React.useState(undefined);
 
+  // Initialisation
+  React.useEffect(() => {
+    const init = async () => {
+      const { signerAddress, predictionMarket, oracle } = await getBlockchain();
+      setPredictionMarket(predictionMarket);
+      setUserAddress(signerAddress);
+      setOracle(oracle);
+
+      console.log(predictionMarket);
+      console.log(oracle);
+      console.log(signerAddress);
+
+      // Get all the prediction game addresses
+      const gameCount = parseInt((await predictionMarket.predictionGameCount()).toString());
+      const predictionGameAddresses = await Promise.all(
+        [...Array(gameCount).keys()].map(x => predictionMarket.predictionMarketRegistry(x))
+      );
+
+      const predictionGames = await Promise.all(
+        predictionGameAddresses.map(x => getPredictionGame(x))
+      );
+      setPredictionGames(predictionGames);
+    }
+    init();
+  }, []);
+
+  // Function to open the create game form
   const openCreateGameForm = () => {
     setOpen(true);
   }
 
+  // Do not render page until all states initialised
+  if (typeof predictionMarket === 'undefined' || typeof oracle === 'undefined' || typeof userAddress === 'undefined') {
+    return (
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        style={{ minHeight: '100vh' }}
+      >
+        <Stack item xs={3} container justify="center" alignItems="center" spacing={3}>
+          <AccountBalanceIcon color="secondary" fontSize="large" sx={{ width: "50px", height: "50px" }} />
+          <Typography fontWeight="700" variant="h1" color="secondary">
+            MOZART
+          </Typography>
+          <CircularProgress color="secondary"/>
+          <Typography color="secondary">Connect your metamask wallet</Typography>
+        </Stack>   
+      </Grid> 
+    )
+  }
+
   return (
-    <Box>
-      <Navbar />
+    <Box pb={5}>
+      <Navbar wallet={userAddress} />
       <Box>
         <Container fixed>
           <Grid container spacing={2} sx={{ my: 3 }} alignItems="center">
@@ -52,9 +108,9 @@ function App() {
         </Container>
       </Box>
       <Dialog open={open} fullWidth={true} maxWidth="md">
-        <CreateGameForm onCloseForm={setOpen} />
+        <CreateGameForm onCloseForm={setOpen} oracle={oracle} />
       </Dialog>
-      <GameList />
+      <GameList wallet={userAddress} predictionGames={predictionGames} />
     </Box>
   );
 }

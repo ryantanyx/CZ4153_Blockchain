@@ -22,7 +22,6 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
     mapping(bytes32 => bytes[]) public requestIdGames;
 
     error FailedTransferLINK(address to, uint256 amount);
-
     bytes32 private immutable jobId;
     uint256 private immutable fee;
 
