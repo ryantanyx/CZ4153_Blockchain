@@ -37,10 +37,10 @@ contract InternalToken{
         external
         returns (uint)
     {
-        uint togive;
+        uint256 togive;
         internalTokenCounts[Side.YES] = SafeMath.add(internalTokenCounts[Side.YES], value);
         internalTokenCounts[Side.NO] = SafeMath.add(internalTokenCounts[Side.NO], value);
-        uint newProduct = SafeMath.mul(internalTokenCounts[Side.YES], internalTokenCounts[Side.NO]);
+        uint256 newProduct = SafeMath.mul(internalTokenCounts[Side.YES], internalTokenCounts[Side.NO]);
 
         if (betSide == Side.YES) {
             togive = SafeMath.div(SafeMath.sub(newProduct, K), internalTokenCounts[Side.NO]);
@@ -60,7 +60,7 @@ contract InternalToken{
         public
         view
         returns (
-            uint
+            uint256
         )
     {
         return internalTokenCounts[value];

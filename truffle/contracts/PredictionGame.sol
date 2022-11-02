@@ -77,6 +77,7 @@ contract PredictionGame{
         choices.push(_payload.choiceA);
         sidesMap[_payload.choiceB] = Side.NO;
         choices.push(_payload.choiceB);
+        sidesMap['_draw_'] = Side.DRAW;
         internalToken = new InternalToken(0, address(this));
         externalTokens[Side.YES] = 0;
         externalTokens[Side.NO] = 0;
@@ -176,35 +177,68 @@ contract PredictionGame{
         return internalToken.seeInternalTokens(side);
     }
 
+    // function testDraw()
+    //     external
+    //     {
+    //         winner = '_draw_';
+    //     }
+    
+    function resolveDraw(address sender)
+        internal
+        onlyExpiredGame(true)
+        returns (
+            uint256
+        )
+    {
+        uint256 gameTotal = SafeMath.add(bets[Side.YES], bets[Side.NO]);
+        uint256 playerTotal = SafeMath.add(betsOfAllPlayers[sender][Side.YES], betsOfAllPlayers[sender][Side.NO]);
+        uint256 potShare = SafeMath.div(SafeMath.mul(SafeMath.div(SafeMath.mul(playerTotal, 10**18), gameTotal), totalPot), 10**18);
+
+        return potShare;
+    }
+    
     function withdrawWinnings()
         external
         payable
         onlyExpiredGame(true)
     {   
-        require(betsOfAllPlayers[msg.sender][sidesMap[winner]] > 0); // check player has placed bets on winning side and hasn't withdrawn
+        //draw
+        if (sidesMap[winner] == Side.DRAW){
+            require((betsOfAllPlayers[msg.sender][Side.YES] > 0) || (betsOfAllPlayers[msg.sender][Side.NO] > 0));
+            
+            uint256 potShare = resolveDraw(msg.sender);
+            payable(msg.sender).transfer(potShare);
 
-        uint winTokens = 0;
-        uint winTokensTotal = 0;
-
-        if (sidesMap[winner] == Side.YES) {
-            winTokens = tokenA.balanceOf(msg.sender);
-            winTokensTotal = externalTokens[Side.YES];
+            betsOfAllPlayers[msg.sender][Side.YES] = 0;
+            betsOfAllPlayers[msg.sender][Side.NO] = 0;
         }
+        //no draw
         else {
-            winTokens = tokenB.balanceOf(msg.sender);
-            winTokensTotal = externalTokens[Side.NO];
+            require(betsOfAllPlayers[msg.sender][sidesMap[winner]] > 0); // check player has placed bets on winning side and hasn't withdrawn
+
+            uint256 winTokens = 0;
+            uint256 winTokensTotal = 0;
+
+            if (sidesMap[winner] == Side.YES) {
+                winTokens = tokenA.balanceOf(msg.sender);
+                winTokensTotal = externalTokens[Side.YES];
+            }
+            else {
+                winTokens = tokenB.balanceOf(msg.sender);
+                winTokensTotal = externalTokens[Side.NO];
+            }
+
+            // calc % winnings
+            // let a = amt of winning tokens sender holds, b = amt of total winning tokens issued, c = totalPot
+            // proportion of winning share D = a / b
+            // proportion of pot = E = D * c
+
+            uint256 potShare = SafeMath.div(SafeMath.mul(SafeMath.div(SafeMath.mul(winTokens, 10**18), winTokensTotal), totalPot), 10**18);
+
+            payable(msg.sender).transfer(potShare);
+
+            betsOfAllPlayers[msg.sender][sidesMap[winner]] = 0;  //signal player has already withdrawn
         }
-
-        // calc % winnings
-        // let a = amt of winning tokens sender holds, b = amt of total winning tokens issued, c = totalPot
-        // proportion of winning share D = a / b
-        // proportion of pot = E = D * c
-
-        uint256 potShare = SafeMath.div(SafeMath.mul(SafeMath.div(SafeMath.mul(winTokens, 10**18), winTokensTotal), totalPot), 10**18);
-
-        payable(msg.sender).transfer(potShare);
-
-        betsOfAllPlayers[msg.sender][sidesMap[winner]] = 0;  //signal player has already withdrawn
     }
 
     function withdrawLiquidity()
@@ -278,7 +312,7 @@ contract PredictionGame{
         tokenB.mint(address(this), msg.value);
 
         //call CPMM
-        uint togive = internalToken.CPMM(msg.value, side);
+        uint256 togive = internalToken.CPMM(msg.value, side);
 
         // Transfer the appropriate amount of tokens to the player
         if (side == Side.YES){
