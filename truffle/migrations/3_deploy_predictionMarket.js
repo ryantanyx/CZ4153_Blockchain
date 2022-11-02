@@ -7,5 +7,7 @@ module.exports = async function (deployer) {
   const ChainLinkInst = await ChainLinkAPIConsumer.deployed()
   const gameContractFactoryInst = await GameContractFactory.deployed()
 
+  console.log("Chainlink deployed at: " + ChainLinkInst.address)
+  console.log("Game Factory deployed at: " + gameContractFactoryInst.address)
   await deployer.deploy(PredictionMarket, ChainLinkInst.address, gameContractFactoryInst.address);
 };

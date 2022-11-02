@@ -37,12 +37,6 @@ contract PredictionGame{
     ERC20Basic public tokenA;
     ERC20Basic public tokenB;
     InternalToken internalToken;
-    string private reqId;
-    address chainLinkAddr;
-    uint gameTypeId;
-    // address public winner;
-    // bool public isWithdrawn;
-    // Result public result;
 
     mapping(string => Side) public sidesMap;
     mapping(Side => uint256) public bets;
@@ -84,14 +78,9 @@ contract PredictionGame{
         totalPot = 0;
         liquidityInitialised = false;
         excess = 0;
-        // reqId = _reqId;
-
-        // Initialization for ChainLink
         winner = "";
         sportId = _payload.sportId;
         gameId = _payload.gameId;
-        // chainLinkAddr = _chainLinkAddr;
-        // gameTypeId  = _gameTypeId;
     }
 
     /**
@@ -321,7 +310,7 @@ contract PredictionGame{
         }
         else{
             tokenB.transfer(msg.sender, togive);
-            externalTokens[Side.YES] = SafeMath.add(externalTokens[Side.NO], togive);
+            externalTokens[Side.NO] = SafeMath.add(externalTokens[Side.NO], togive);
         }
     }
 

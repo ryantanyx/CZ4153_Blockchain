@@ -22,11 +22,9 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
     mapping(bytes32 => bytes[]) public requestIdGames;
 
     error FailedTransferLINK(address to, uint256 amount);
-
-    // event RequestSent(Chainlink.Request req);
-    // event GameRequestFulfilled(bytes32 requestId);
     bytes32 private immutable jobId;
     uint256 private immutable fee;
+    mapping(bytes32 => bool) public isFulfilled;
 
     constructor(
         address _oracle,
@@ -63,32 +61,27 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
 
     function fulfillGames(bytes32 _requestId, bytes[] memory _games) external recordChainlinkFulfillment(_requestId) {
         requestIdGames[_requestId] = _games;
-        // emit GameRequestFulfilled(_requestId);
+        isFulfilled[_requestId] = true;
     }
 
     /**
      * @notice Returns an array of game data for a given market, sport ID, and date.
      * @dev Result format is array of either encoded GameCreate tuples or encoded GameResolve tuples.
-     * @param _payment the LINK amount in Juels (i.e. 10^18 aka 1 LINK).
      * @param _market the type of game data to be queried ("create" or "resolve").
      * @param _sportId the ID of the sport to be queried (see supported sportId).
      * @param _date the date for the games to be queried (format in epoch).
      */
     function requestGames(
-        uint256 _payment,
         string calldata _market,
         uint256 _sportId,
         uint256 _date
     ) external returns (bytes32 requestId){
-        require(_payment >= 100000000000000000, "Insufficient link sent to oracle!");
         Chainlink.Request memory req = buildOperatorRequest(jobId, this.fulfillGames.selector);
 
         req.addUint("date", _date);
         req.add("market", _market);
         req.addUint("sportId", _sportId);
-        // emit RequestSent(req);
-        return sendOperatorRequestTo(chainlinkOracleAddress() ,req, _payment);
-        
+        return sendOperatorRequestTo(chainlinkOracleAddress() ,req, fee);
     }
 
     /**
@@ -96,7 +89,6 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
      * @dev Result format is array of either encoded GameCreate tuples or encoded GameResolve tuples.
      * @dev "gameIds" is optional.
      * @dev "statusIds" is optional, and ignored for market "create".
-     * @param _payment the LINK amount in Juels (i.e. 10^18 aka 1 LINK).
      * @param _market the type of game data to be queried ("create" or "resolve").
      * @param _sportId the ID of the sport to be queried (see supported sportId).
      * @param _date the date for the games to be queried (format in epoch).
@@ -104,7 +96,6 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
      * ["23660869053591173981da79133fe4c2", "fb78cede8c9aa942b2569b048e649a3f"]).
      */
     function requestSpecificGames(
-        uint256 _payment,
         string calldata _market,
         uint256 _sportId,
         uint256 _date,
@@ -116,7 +107,7 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
         req.addUint("sportId", _sportId);
         req.addUint("date", _date);
         req.addStringArray("gameIds", _bytes32ArrayToString(_gameIds)); // NB: optional filter
-        sendOperatorRequest(req, _payment);
+        sendOperatorRequest(req, fee);
     }
 
     function withdrawLink(address payable _payee, uint256 _amount) external {

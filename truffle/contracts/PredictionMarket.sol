@@ -26,7 +26,7 @@ contract PredictionMarket is Ownable {
     uint256 public predictionGameCount;
     mapping(uint256 => address) public predictionMarketRegistry;
     address private chainLinkAddress;
-    GameContractFactory gameFactory;
+    GameContractFactory private gameFactory;
 
     constructor(
         address _chainLinkAddress,
@@ -35,14 +35,6 @@ contract PredictionMarket is Ownable {
         chainLinkAddress = _chainLinkAddress;
         predictionGameCount = 0;
         gameFactory = GameContractFactory(_gameContractFactoryAddr);
-    }
-
-    /**
-     * Making sure that the `_predictionGameId` is valid
-     */
-    modifier onlyExistingGame(uint256 _predictionGameId) {
-        require(_predictionGameId < predictionGameCount);
-        _;
     }
 
     /**
@@ -99,6 +91,6 @@ contract PredictionMarket is Ownable {
         external view
         returns(address addr)
     {
-        return (address(gameFactory));
+        return (chainLinkAddress);
     }
 }
