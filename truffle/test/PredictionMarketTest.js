@@ -53,7 +53,7 @@ contract('Creating Prediction Market contract', (deployer, network, accounts) =>
     });
 
     it("it should have increased the value in prediction game registry", async () => {
-      var value = await web3.eth.getStorageAt(predictionMarket.address, );    
+      var value = await web3.eth.getStorageAt(predictionMarket.address, 1);    
       assert.notEqual(value, 0 , "Value in prediction game registry is not increased");
     })
 
@@ -62,18 +62,29 @@ contract('Creating Prediction Market contract', (deployer, network, accounts) =>
       assert.equal(predictionGame.address, predictionGameAddr , "Address in prediction game registry is incorrect");
     })
   
-    it('it should be created with the correct variables', async () =>{
-      var expiryTime = await predictionGame.expiryTime() 
-      var creator = await predictionGame.creator()
-      var betTitle = await predictionGame.betTitle()
-      var choiceA = await predictionGame.choices(0)
-      var choiceB = await predictionGame.choices(1)
-
+    it('it should be created with the correct expiry Time', async () =>{
+      var expiryTime = await predictionGame.expiryTime()
       assert.equal(expiryTime, payload.expiryDate, "Expiry date is incorrect")
+    })
+
+    it('it should be created with the correct creator', async () =>{ 
+      var creator = await predictionGame.creator()
       assert.equal(creator, owner, "Owner of the created prediction game is incorrect")
-      assert.equal(betTitle, payload.betTitle, "Expiry date is incorrect")
+    })
+
+    it('it should be created with the correct bet title', async () =>{
+      var betTitle = await predictionGame.betTitle()
+      assert.equal(betTitle, payload.betTitle, "Bet title is incorrect")
+    })
+
+    it('it should be created with the correct choice A', async () =>{
+      var choiceA = await predictionGame.choices(0)
       assert.equal(choiceA, payload.choiceA, "Choice A is incorrect")
-      assert.equal(choiceB, payload.choiceB, "Choice B is incorrect")
+    })
+
+    it('it should be created with the correct choice B', async () =>{
+      var choiceB = await predictionGame.choices(1)
+     assert.equal(choiceB, payload.choiceB, "Choice B is incorrect")
     })
 
     it('it should have emitted transfer ownership event for 2 tokens', async() =>{
