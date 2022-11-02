@@ -20,7 +20,8 @@
 
 require('dotenv').config();
 const mnemonic = process.env.MNEMONIC;
-const infuraProjectId = process.env.API_KEY;
+const infuraProjectId = process.env.INFURA_API_KEY;
+const mumbaiProjectId = process.env.MUMBAI_API_KEY;
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 module.exports = {
@@ -59,6 +60,15 @@ module.exports = {
       timeoutBlocks: 50,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true
     },
+    mumbai: {
+      provider: () => {
+        return new HDWalletProvider(mnemonic, 'https://polygon-mumbai.g.alchemy.com/v2/' + mumbaiProjectId)
+      },
+      network_id: 80001, // eslint-disable-line camelcase
+      confirmations: 1,    // # of confirmations to wait between deployments. (default: 0)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true
+    }
     //
     // An additional network, but with some advanced options…
     // advanced: {
