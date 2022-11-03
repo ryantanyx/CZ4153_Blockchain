@@ -3,6 +3,7 @@ import { Box, TextField, Typography, Stack, Grid, IconButton, Button, DialogTitl
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { getGamesInfo } from '../blockchain/oracle';
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import SearchIcon from '@mui/icons-material/Search';
@@ -51,14 +52,17 @@ const CreateGameForm = ({ onCloseForm, oracle }) => {
                 console.log(expiryEpoch);
                 console.log(sport);
                 // Call smart contract
-                const tx = await oracle.requestGames("100000000000000000", "create", sport.toString(), expiryEpoch.toString());
-                console.log(tx);
-                const txReceipt = await tx.wait();
-                console.log(txReceipt);
-                const reqId = txReceipt.logs[0].topics[0];
-                console.log(reqId);
-                await new Promise(r => setTimeout(r, 100000));
-                const result = await oracle.getGamesCreated(reqId);
+                // const tx = await oracle.requestGames("100000000000000000", "create", sport.toString(), expiryEpoch.toString());
+                // console.log(tx);
+                // const txReceipt = await tx.wait();
+                // console.log(txReceipt);
+                // const reqId = txReceipt.logs[0].topics[0];
+                // console.log(reqId);
+                // await new Promise(r => setTimeout(r, 100000));
+                // const result = await oracle.getGamesCreated(reqId);
+
+                let result = await getGamesInfo(oracle, sport, expiryEpoch)
+
                 console.log(result);
             } catch (error) {
                 console.log("Error:" + error.message);

@@ -5,16 +5,20 @@ const { developmentChains } = require("../helper-truffle-config")
 module.exports = async function (deployer, network, accounts) {
     if (developmentChains.includes(network)) {
         creator = accounts[0];
-        expiryTime = 1668265200;
         await deployer.deploy(ERC20Basic, "Token A", "TKA");
         const tokenA = await ERC20Basic.deployed()
         await deployer.deploy(ERC20Basic, "Token B", "TKB");
         const tokenB = await ERC20Basic.deployed()
-        betTile = "Test title"
-        choiceA = "Side A"
-        choiceB = "Side B"
+        payload = {
+            betTile : "Test title",
+            expiryDate :  1668265200,
+            choiceA : "Side A",
+            choiceB : "Side B",
+            sportId : "11", 
+            gameId : "0"
+        }
         console.log("Token A: " + tokenA.address + "\nToken B: " + tokenB.address)
-        predictionGame = await deployer.deploy(PredictionGame, creator, expiryTime, tokenA.address, tokenB.address, betTile, choiceA, choiceB)
+        predictionGame = await deployer.deploy(PredictionGame, creator, tokenA.address, tokenB.address, payload)
         console.log("Deployed Prediction Game for testing...")
         tokenA.transferOwnership(predictionGame.address);
         tokenB.transferOwnership(predictionGame.address);
