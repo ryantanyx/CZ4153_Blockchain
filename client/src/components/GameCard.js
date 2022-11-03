@@ -4,9 +4,8 @@ import { getGameInfo } from '../blockchain/predictionGame.js';
 import LiquidityForm from './LiquidityForm';
 import GamePage from './GamePage';
 import { getBarBackground } from '../utils/helper.js';
-import SnackBar from './SnackBar';
 
-const GameCard = ({ wallet, game }) => {
+const GameCard = ({ wallet, game, updateSnackbar }) => {
     const [gameInfo, setGameInfo] = React.useState(undefined);
     const [openLiquidityForm, setOpenLiquidityForm] = React.useState(false);
     const [openGame, setOpenGame] = React.useState(false);
@@ -28,25 +27,6 @@ const GameCard = ({ wallet, game }) => {
         newGameInfo.totalPot = totalPot;
         setGameInfo(newGameInfo);
     }
-
-    // Snackbar
-    const [snackbarInfo, setSnackbarInfo] = React.useState(undefined);
-    const [openSnackbar, setOpenSnackbar] = React.useState(false);
-    const updateSnackbar = (severity, message) => {
-        const snackbarInfo = {
-            severity: severity,
-            message: message
-        };
-        setSnackbarInfo(snackbarInfo);
-        setOpenSnackbar(true);
-    }
-
-    const handleCloseSnackbar = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-        setOpenSnackbar(false);
-    };
 
     // Do not render card until initialised
     if (typeof gameInfo === 'undefined') {
@@ -123,7 +103,6 @@ const GameCard = ({ wallet, game }) => {
             <Dialog open={openGame} fullWidth={true} maxWidth="md">
                 <GamePage onClosePage={setOpenGame} game={game} gameInfo={gameInfo} wallet={wallet} updateGameInfo={setGameInfo} triggerSnackbar={updateSnackbar} />
             </Dialog>
-            { snackbarInfo && <SnackBar severity={snackbarInfo.severity} message={snackbarInfo.message} openSnackbar={openSnackbar} handleCloseSnackbar={handleCloseSnackbar} /> }
         </Card>
     )   
 }

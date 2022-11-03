@@ -1,7 +1,23 @@
+import { getPredictionGame } from './ethereum.js';
+
 export const sides = {
     A: 0,
     B: 1
 };
+
+// Fetch all games from prediction market
+export const fetchGames = async (predictionMarket) => {
+    // Get all the prediction game addresses
+    const gameCount = parseInt((await predictionMarket.predictionGameCount()).toString());
+    const predictionGameAddresses = await Promise.all(
+      [...Array(gameCount).keys()].map(x => predictionMarket.predictionMarketRegistry(x))
+    );
+
+    const predictionGames = await Promise.all(
+      predictionGameAddresses.map(x => getPredictionGame(x))
+    );
+    return predictionGames;
+}
 
 // Get game details
 export const getGameInfo = async (game) => {
