@@ -5,7 +5,7 @@ import LiquidityForm from './LiquidityForm';
 import GamePage from './GamePage';
 import { getBarBackground } from '../utils/helper.js';
 
-const GameCard = ({ wallet, game, updateSnackbar }) => {
+const GameCard = ({ wallet, game, updateSnackbar, oracle }) => {
     const [gameInfo, setGameInfo] = React.useState(undefined);
     const [openLiquidityForm, setOpenLiquidityForm] = React.useState(false);
     const [openGame, setOpenGame] = React.useState(false);
@@ -19,6 +19,12 @@ const GameCard = ({ wallet, game, updateSnackbar }) => {
         }
         init();
     }, [game]);
+
+    // Fetch game again to update state
+    const updateGame = async () => {
+        const gameInfo = await getGameInfo(game);
+        setGameInfo(gameInfo);
+    }
 
     // Callback function to update liquidity initialised field
     const initialiseLiquidity = async (totalPot) => {
@@ -101,7 +107,7 @@ const GameCard = ({ wallet, game, updateSnackbar }) => {
                 <LiquidityForm wallet={wallet} onCloseForm={setOpenLiquidityForm} game={game} initialiseLiquidity={initialiseLiquidity} triggerSnackbar={updateSnackbar} />
             </Dialog>
             <Dialog open={openGame} fullWidth={true} maxWidth="md">
-                <GamePage onClosePage={setOpenGame} game={game} gameInfo={gameInfo} wallet={wallet} updateGameInfo={setGameInfo} triggerSnackbar={updateSnackbar} />
+                <GamePage onClosePage={setOpenGame} game={game} gameInfo={gameInfo} wallet={wallet} updateGameInfo={setGameInfo} triggerSnackbar={updateSnackbar} oracle={oracle} updateGame={updateGame} />
             </Dialog>
         </Card>
     )   

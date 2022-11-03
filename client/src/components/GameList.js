@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Container, Box, Grid, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import GameCard from './GameCard';
 
-const GameList = ({ wallet, predictionGames, updateSnackbar }) => {
+const GameList = ({ wallet, predictionGames, updateSnackbar, oracle }) => {
     // Toggle button
     const [alignment, setAlignment] = React.useState('1');
     const handleTabChange = (event, newAlignment) => {
@@ -40,7 +40,7 @@ const GameList = ({ wallet, predictionGames, updateSnackbar }) => {
                     {
                         predictionGames != null && predictionGames.map((game) => 
                             <Grid item xs={3}>
-                                <GameCard key={game.address} wallet={wallet} game={game} updateSnackbar={updateSnackbar} />
+                                <GameCard key={game.address} wallet={wallet} game={game} updateSnackbar={updateSnackbar} oracle={oracle} />
                             </Grid>
                         )
                     }

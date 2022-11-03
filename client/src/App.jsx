@@ -129,7 +129,7 @@ function App() {
       <Dialog open={open} fullWidth={true} maxWidth="md">
         <CreateGameForm onCloseForm={setOpen} oracle={oracle} predictionMarket={predictionMarket} updateGames={updateGames} updateSnackbar={updateSnackbar} />
       </Dialog>
-      <GameList wallet={userAddress} predictionGames={predictionGames} updateSnackbar={updateSnackbar} />
+      <GameList wallet={userAddress} predictionGames={predictionGames} updateSnackbar={updateSnackbar} oracle={oracle} />
       { snackbarInfo && <SnackBar severity={snackbarInfo.severity} message={snackbarInfo.message} openSnackbar={openSnackbar} handleCloseSnackbar={handleCloseSnackbar} /> }
     </Box>
   );

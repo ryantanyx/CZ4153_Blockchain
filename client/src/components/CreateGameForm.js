@@ -85,7 +85,7 @@ const CreateGameForm = ({ onCloseForm, oracle, predictionMarket, updateGames, up
                 setMatches(result);
                 setLoadingSearch(false);
             } catch (error) {
-                console.log("Error:" + error.message);
+                console.log("Error: " + error.message);
             }
         }
     }

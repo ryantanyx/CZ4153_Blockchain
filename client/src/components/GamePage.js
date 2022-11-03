@@ -6,8 +6,9 @@ import { getToken, getTokenBalance } from '../blockchain/token.js'
 import { isInt } from '../utils/math.js';
 import { getGameInfo } from '../blockchain/predictionGame.js';
 import { getEmoji } from '../utils/text.js';
+import { waitFulfilled } from '../blockchain/oracle.js';
 
-const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, triggerSnackbar }) => {
+const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, triggerSnackbar, oracle, updateGame }) => {
     const [choice, setChoice] = React.useState(true);
     const [bets, setBets] = React.useState(undefined);
     const [amount, setAmount] = React.useState("0");
@@ -90,7 +91,36 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
 
     // Call smart contract to resolve the winner of the game
     const resolveWinner = async () => {
-
+        try {
+            // Call chain link smart contract to get winner 
+            const tx = await oracle.requestGames("resolve", gameInfo.sportId, gameInfo.expiryTime);
+            console.log(tx);
+            const txReceipt = await tx.wait();
+            console.log(txReceipt);
+            const reqId = txReceipt.logs[0].topics[1];
+            console.log(reqId);
+            // Check if request has been fulfilled by chainlink
+            await waitFulfilled(oracle, reqId);
+            const result = await oracle.getGamesResolved(reqId);
+            console.log(result);
+            let game = null;
+            for (let i = 0; i < result.length; i++) {
+                if (gameInfo.gameId === result[i].gameId) {
+                    game = result[i];
+                    break;
+                }
+            }
+            const winner = (game.homeScore > game.awayScore) ? gameInfo.choiceA : ((game.homeScore < game.awayScore) ? gameInfo.choiceB : "_draw_");
+            // Call prediction game smart contract to update winner
+            tx = await game.updateWinner(winner);
+            await tx.wait();
+            // Update winner on UI
+            updateGame();
+            // Trigger snackbar
+            triggerSnackbar("success", `Successfully resolved winner! Congrats on your win/loss! ${getEmoji(0x1F525)}${getEmoji(0x1F525)}${getEmoji(0x1F525)}`);
+        } catch (error) {
+            console.log("Error: " + error.message);
+        }
     }
 
     // Call smart contract to withdraw winnings
@@ -142,6 +172,7 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                     sx={{ borderRadius: 1 }}>
                     <Grid container justifyContent="space-between" alignItems="center" height="100%">
                         <Typography variant="h5" fontWeight={600} ml={1} >{gameInfo.choiceA}{(gameInfo.winner === gameInfo.choiceA ? getEmoji(0x1F451) : "")}</Typography>
+                        { gameInfo.winner === "_draw_" ? <Typography variant="h5" fontWeight={600}>{getEmoji(0x1F631)}DRAW{getEmoji(0x1F631)}</Typography> : "" }
                         <Typography variant="h5" fontWeight={600} mr={1}>{(gameInfo.winner === gameInfo.choiceB ? getEmoji(0x1F451) : "")}{gameInfo.choiceB}</Typography>
                     </Grid>
                     <Grid container justifyContent="space-between">
