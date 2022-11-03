@@ -18,6 +18,29 @@ const theme = createTheme({
             contrastText: '#fff',
         },
     },
+    components: {
+        MuiToggleButton: {
+            styleOverrides: {
+                root: {
+                    "&": {
+                        color: "#fefefe"
+                    },
+                    "&.Mui-selected": {
+                        color: "#000000",
+                        backgroundColor: '#fefefe'
+                    },
+                    "&.Mui-selected:hover": {
+                        color: "#000000",
+                        backgroundColor: '#fefefe'
+                    },
+                    "&:hover": {
+                        color: '#000000',
+                        backgroundColor: '#fefefe'
+                    }
+                }
+            }
+        }
+    }
 });
 
 export default theme;

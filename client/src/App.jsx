@@ -11,8 +11,11 @@ import GameList from "./components/GameList";
 import { Container, Box, Typography, Grid, CardMedia, Button, Dialog, CircularProgress, Stack } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import banner from "./banner.jpg";
+import ape from "./ape.jpg";
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import { getBlockchain, getPredictionGame } from './blockchain/ethereum.js';
+import { getBlockchain } from './blockchain/ethereum.js';
+import { fetchGames } from './blockchain/predictionGame.js';
+import SnackBar from './components/SnackBar.js';
 
 function App() {
   const [open, setOpen] = React.useState(false);
@@ -33,19 +36,36 @@ function App() {
       console.log(oracle);
       console.log(signerAddress);
 
-      // Get all the prediction game addresses
-      const gameCount = parseInt((await predictionMarket.predictionGameCount()).toString());
-      const predictionGameAddresses = await Promise.all(
-        [...Array(gameCount).keys()].map(x => predictionMarket.predictionMarketRegistry(x))
-      );
-
-      const predictionGames = await Promise.all(
-        predictionGameAddresses.map(x => getPredictionGame(x))
-      );
+      // Get all the prediction games
+      const predictionGames = await fetchGames(predictionMarket);
       setPredictionGames(predictionGames);
     }
     init();
   }, []);
+
+  // Snackbar
+  const [snackbarInfo, setSnackbarInfo] = React.useState(undefined);
+  const [openSnackbar, setOpenSnackbar] = React.useState(false);
+  const updateSnackbar = (severity, message) => {
+      const snackbarInfo = {
+          severity: severity,
+          message: message
+      };
+      setSnackbarInfo(snackbarInfo);
+      setOpenSnackbar(true);
+  }
+  const handleCloseSnackbar = (event, reason) => {
+      if (reason === 'clickaway') {
+          return;
+      }
+      setOpenSnackbar(false);
+  };
+
+  // Refetch and update prediction games list
+  const updateGames = async () => {
+    const predictionGames = await fetchGames(predictionMarket);
+    setPredictionGames(predictionGames);
+  }
 
   // Function to open the create game form
   const openCreateGameForm = () => {
@@ -101,16 +121,17 @@ function App() {
                 alt="title"
                 component="img"
                 height="400"
-                image={banner}
+                image={ape}
                 sx={{ borderRadius: 3 }} />
             </Grid>
           </Grid>
         </Container>
       </Box>
       <Dialog open={open} fullWidth={true} maxWidth="md">
-        <CreateGameForm onCloseForm={setOpen} oracle={oracle} />
+        <CreateGameForm onCloseForm={setOpen} oracle={oracle} predictionMarket={predictionMarket} updateGames={updateGames} updateSnackbar={updateSnackbar} />
       </Dialog>
-      <GameList wallet={userAddress} predictionGames={predictionGames} />
+      <GameList wallet={userAddress} predictionGames={predictionGames} updateSnackbar={updateSnackbar} oracle={oracle} />
+      { snackbarInfo && <SnackBar severity={snackbarInfo.severity} message={snackbarInfo.message} openSnackbar={openSnackbar} handleCloseSnackbar={handleCloseSnackbar} /> }
     </Box>
   );
 }
