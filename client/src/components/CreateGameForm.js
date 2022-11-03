@@ -71,15 +71,14 @@ const CreateGameForm = ({ onCloseForm, oracle, predictionMarket, updateGames, up
                 console.log(expiryEpoch);
                 console.log(sport);
                 // Call smart contract
-                // const tx = await oracle.requestGames("create", sport.toString(), expiryEpoch.toString());
-                // console.log(tx);
-                // const txReceipt = await tx.wait();
-                // console.log(txReceipt);
-                // const reqId = txReceipt.logs[0].topics[0];
-                // console.log(reqId);
-                // Check if request has been fulfilled by chainlink
+                const tx = await oracle.requestGames("create", sport.toString(), expiryEpoch.toString());
+                console.log(tx);
                 setLoadingSearch(true);
-                const reqId = "0xe1b50069a0bb44d6911811b5e2d083dada7839c302d864bcf850adb55063a86a";
+                const txReceipt = await tx.wait();
+                console.log(txReceipt);
+                const reqId = txReceipt.logs[0].topics[1];
+                console.log(reqId);
+                // Check if request has been fulfilled by chainlink
                 await waitFulfilled(oracle, reqId);
                 const result = await oracle.getGamesCreated(reqId);
                 console.log(result);

@@ -8,7 +8,6 @@ export const waitFulfilled = async (oracle, reqId) => {
                 resolve();
             }, 5000);
         });
-        console.log("waiting...")
     }
 }
 
