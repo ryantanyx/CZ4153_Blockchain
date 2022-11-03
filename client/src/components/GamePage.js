@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { Stack, TextField, ButtonGroup, Button, Box, DialogTitle, IconButton, Grid, Typography, Container, TableContainer, Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { getBarBackground } from '../utils/helper.js';
+import { getBarBackground, getDateTimeString } from '../utils/helper.js';
 import { getToken, getTokenBalance } from '../blockchain/token.js'
 import { isInt } from '../utils/math.js';
 import { getGameInfo } from '../blockchain/predictionGame.js';
 import { getEmoji } from '../utils/text.js';
+import { waitFulfilled } from '../blockchain/oracle.js';
 
-const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, triggerSnackbar }) => {
+const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, triggerSnackbar, oracle, updateGame }) => {
     const [choice, setChoice] = React.useState(true);
     const [bets, setBets] = React.useState(undefined);
     const [amount, setAmount] = React.useState("0");
@@ -75,7 +76,8 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
             try {
                 // Call smart contract
                 const playerChoice = choice ? gameInfo.choiceA : gameInfo.choiceB;
-                await game.placeBet(playerChoice, {value: amount});
+                const tx = await game.placeBet(playerChoice, {value: amount});
+                await tx.wait();
                 // Update game info in gamecard
                 const newGameInfo = await getGameInfo(game);
                 updateGameInfo(newGameInfo);
@@ -87,6 +89,40 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
         }
     }
 
+    // Call smart contract to resolve the winner of the game
+    const resolveWinner = async () => {
+        try {
+            // Call chain link smart contract to get winner 
+            const tx = await oracle.requestGames("resolve", gameInfo.sportId, gameInfo.expiryTime);
+            console.log(tx);
+            const txReceipt = await tx.wait();
+            console.log(txReceipt);
+            const reqId = txReceipt.logs[0].topics[1];
+            console.log(reqId);
+            // Check if request has been fulfilled by chainlink
+            await waitFulfilled(oracle, reqId);
+            const result = await oracle.getGamesResolved(reqId);
+            console.log(result);
+            let game = null;
+            for (let i = 0; i < result.length; i++) {
+                if (gameInfo.gameId === result[i].gameId) {
+                    game = result[i];
+                    break;
+                }
+            }
+            const winner = (game.homeScore > game.awayScore) ? gameInfo.choiceA : ((game.homeScore < game.awayScore) ? gameInfo.choiceB : "_draw_");
+            // Call prediction game smart contract to update winner
+            const updateTx = await game.updateWinner(winner);
+            await updateTx.wait();
+            // Update winner on UI
+            updateGame();
+            // Trigger snackbar
+            triggerSnackbar("success", `Successfully resolved winner! Congrats on your win/loss! ${getEmoji(0x1F525)}${getEmoji(0x1F525)}${getEmoji(0x1F525)}`);
+        } catch (error) {
+            console.log("Error: " + error.message);
+        }
+    }
+
     // Call smart contract to withdraw winnings
     const withdrawWinnings = async () => {
         // Check if winner already resolved
@@ -95,7 +131,9 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
             triggerSnackbar("error", `Winner hasn't been resolved yet! ${getEmoji(0x1F440)}${getEmoji(0x1F440)}${getEmoji(0x1F440)}`);
         } else {
             try {
-                await game.withdrawWinnings()
+                const tx = await game.withdrawWinnings();
+                await tx.wait();
+                triggerSnackbar("success", `Successfully withdrawn winnings! ${getEmoji(0x1F31A)}${getEmoji(0x1F31A)}${getEmoji(0x1F31A)}`);
             } catch (error) {
                 console.log("Error: " + error.message);
                 // Show error snack bar
@@ -107,7 +145,9 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
     // Call smart contract to withdraw liquidity (doesn't need winner to be resolved yet, as long as game is closed)
     const withdrawLiquidity = async () => {
         try {
-            await game.withdrawLiquidity();
+            const tx = await game.withdrawLiquidity();
+            await tx.wait();
+            triggerSnackbar("success", `Successfully withdrawn liquidity! ${getEmoji(0x1F31A)}${getEmoji(0x1F31A)}${getEmoji(0x1F31A)}`);
         } catch (error) {
             console.log("Error: " + error.message);
             // Show error snack bar
@@ -132,9 +172,11 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                     sx={{ borderRadius: 1 }}>
                     <Grid container justifyContent="space-between" alignItems="center" height="100%">
                         <Typography variant="h5" fontWeight={600} ml={1} >{gameInfo.choiceA}{(gameInfo.winner === gameInfo.choiceA ? getEmoji(0x1F451) : "")}</Typography>
+                        { gameInfo.winner === "_draw_" ? <Typography variant="h5" fontWeight={600}>{getEmoji(0x1F631)}DRAW{getEmoji(0x1F631)}</Typography> : "" }
                         <Typography variant="h5" fontWeight={600} mr={1}>{(gameInfo.winner === gameInfo.choiceB ? getEmoji(0x1F451) : "")}{gameInfo.choiceB}</Typography>
                     </Grid>
-                    <Grid container justifyContent="flex-end">
+                    <Grid container justifyContent="space-between">
+                        <Typography>Expires: {getDateTimeString(gameInfo.expiryTime)}</Typography>
                         <Typography>Total Pot: {gameInfo.totalPot} ETH</Typography>
                     </Grid>
                 </Box>
@@ -163,7 +205,16 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                         </TableContainer>
                         <Stack mt={2} direction="row" space={4} style={{ display: "flex" }} justifyContent="space-between" >
                             <Box sx={{ width: "49%" }}>
-                                <Button disabled={currentTime<gameInfo.expiryTime} variant="contained" onClick={withdrawWinnings} sx={{ width: "100%" }}>Withdraw Winnings</Button>
+                                {
+                                    (currentTime < gameInfo.expiryTime) ?
+                                        <Button disabled variant="contained" sx={{ width: "100%" }}>Resolve Winner</Button>
+                                    :
+                                        (gameInfo.winner === "") ?
+                                            <Button variant="contained" onClick={resolveWinner} sx={{ width: "100%" }}>Resolve Winner</Button>
+                                        :
+                                            <Button variant="contained" onClick={withdrawWinnings} sx={{ width: "100%" }}>Withdraw Winnings</Button>
+                                }
+                                
                             </Box>
                             <Box sx={{ width: "49%" }}>
                                 <Button disabled={currentTime<gameInfo.expiryTime || gameInfo.creator !== wallet} variant="contained" onClick={withdrawLiquidity} sx={{ width: "100%" }}>Withdraw Liquidity</Button>

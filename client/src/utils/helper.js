@@ -9,3 +9,8 @@ export const getBarBackground = (gameInfo) => {
     const greenRatio = Math.round((green / (green + red)) * 100);
     return 'linear-gradient(to right, #12892193 0% ' + greenRatio + '%, #FA121193 ' + greenRatio + '% 100%)';
 }
+
+// Returns datetime string given epoch unix time
+export const getDateTimeString = (epochTime) => {
+    return (new Date(epochTime * 1000)).toLocaleString();
+}

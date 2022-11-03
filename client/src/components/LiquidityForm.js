@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Grid, DialogTitle, IconButton, Stack, Typography, TextField, Button } from '@mui/material';
+import { Box, Grid, DialogTitle, IconButton, Stack, Typography, TextField, Button, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import { isInt } from '../utils/math.js';
@@ -8,6 +8,7 @@ import { getEmoji } from '../utils/text.js';
 const LiquidityForm = ({ wallet, onCloseForm, game, initialiseLiquidity, triggerSnackbar }) => {
     const [liquidity, setLiquidity] = React.useState("0");
     const [errorMessage, setErrorMessage] = React.useState("");
+    const [loadingSearch, setLoadingSearch] = React.useState(false);
 
     // Close the form
     const closeLiquidityForm = React.useCallback(() => {
@@ -27,7 +28,10 @@ const LiquidityForm = ({ wallet, onCloseForm, game, initialiseLiquidity, trigger
         } else {
             try {
                 // Call smart contract
-                await game.provideLiquidity({value: liquidity});
+                const tx = await game.provideLiquidity({value: liquidity});
+                setLoadingSearch(true);
+                await tx.wait();
+                setLoadingSearch(false);
                 // Get new total pot
                 const totalPot = (await game.totalPot()).toString();
                 // Update liquidity initialised in GameCard
@@ -62,7 +66,8 @@ const LiquidityForm = ({ wallet, onCloseForm, game, initialiseLiquidity, trigger
                         onChange={(e) => setLiquidity(e.target.value)}
                     />
                 </Box>
-                <Grid container justifyContent="flex-end">
+                <Grid container justifyContent="flex-end" >
+                    { loadingSearch ? <CircularProgress size='20px' sx={{ my: 2, mr: 2 }} /> : "" }
                     <Button 
                         variant="contained"
                         color="success"

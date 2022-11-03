@@ -4,9 +4,8 @@ import { getGameInfo } from '../blockchain/predictionGame.js';
 import LiquidityForm from './LiquidityForm';
 import GamePage from './GamePage';
 import { getBarBackground } from '../utils/helper.js';
-import SnackBar from './SnackBar';
 
-const GameCard = ({ wallet, game }) => {
+const GameCard = ({ wallet, game, updateSnackbar, oracle }) => {
     const [gameInfo, setGameInfo] = React.useState(undefined);
     const [openLiquidityForm, setOpenLiquidityForm] = React.useState(false);
     const [openGame, setOpenGame] = React.useState(false);
@@ -21,6 +20,12 @@ const GameCard = ({ wallet, game }) => {
         init();
     }, [game]);
 
+    // Fetch game again to update state
+    const updateGame = async () => {
+        const gameInfo = await getGameInfo(game);
+        setGameInfo(gameInfo);
+    }
+
     // Callback function to update liquidity initialised field
     const initialiseLiquidity = async (totalPot) => {
         const newGameInfo = gameInfo;
@@ -28,25 +33,6 @@ const GameCard = ({ wallet, game }) => {
         newGameInfo.totalPot = totalPot;
         setGameInfo(newGameInfo);
     }
-
-    // Snackbar
-    const [snackbarInfo, setSnackbarInfo] = React.useState(undefined);
-    const [openSnackbar, setOpenSnackbar] = React.useState(false);
-    const updateSnackbar = (severity, message) => {
-        const snackbarInfo = {
-            severity: severity,
-            message: message
-        };
-        setSnackbarInfo(snackbarInfo);
-        setOpenSnackbar(true);
-    }
-
-    const handleCloseSnackbar = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-        setOpenSnackbar(false);
-    };
 
     // Do not render card until initialised
     if (typeof gameInfo === 'undefined') {
@@ -121,9 +107,8 @@ const GameCard = ({ wallet, game }) => {
                 <LiquidityForm wallet={wallet} onCloseForm={setOpenLiquidityForm} game={game} initialiseLiquidity={initialiseLiquidity} triggerSnackbar={updateSnackbar} />
             </Dialog>
             <Dialog open={openGame} fullWidth={true} maxWidth="md">
-                <GamePage onClosePage={setOpenGame} game={game} gameInfo={gameInfo} wallet={wallet} updateGameInfo={setGameInfo} triggerSnackbar={updateSnackbar} />
+                <GamePage onClosePage={setOpenGame} game={game} gameInfo={gameInfo} wallet={wallet} updateGameInfo={setGameInfo} triggerSnackbar={updateSnackbar} oracle={oracle} updateGame={updateGame} />
             </Dialog>
-            { snackbarInfo && <SnackBar severity={snackbarInfo.severity} message={snackbarInfo.message} openSnackbar={openSnackbar} handleCloseSnackbar={handleCloseSnackbar} /> }
         </Card>
     )   
 }
