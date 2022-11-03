@@ -11,6 +11,7 @@ import GameList from "./components/GameList";
 import { Container, Box, Typography, Grid, CardMedia, Button, Dialog, CircularProgress, Stack } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import banner from "./banner.jpg";
+import ape from "./ape.jpg";
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { getBlockchain } from './blockchain/ethereum.js';
 import { fetchGames } from './blockchain/predictionGame.js';
@@ -120,7 +121,7 @@ function App() {
                 alt="title"
                 component="img"
                 height="400"
-                image={banner}
+                image={ape}
                 sx={{ borderRadius: 3 }} />
             </Grid>
           </Grid>
