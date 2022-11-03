@@ -112,8 +112,8 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
             }
             const winner = (game.homeScore > game.awayScore) ? gameInfo.choiceA : ((game.homeScore < game.awayScore) ? gameInfo.choiceB : "_draw_");
             // Call prediction game smart contract to update winner
-            tx = await game.updateWinner(winner);
-            await tx.wait();
+            const updateTx = await game.updateWinner(winner);
+            await updateTx.wait();
             // Update winner on UI
             updateGame();
             // Trigger snackbar
