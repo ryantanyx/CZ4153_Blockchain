@@ -70,8 +70,11 @@ const CreateGameForm = ({ onCloseForm, oracle, predictionMarket, updateGames, up
                 const expiryEpoch = new Date(dateTimeValue.$y, dateTimeValue.$M, dateTimeValue.$D, dateTimeValue.$H, dateTimeValue.$m, dateTimeValue.$s).getTime() / 1000;
                 console.log(expiryEpoch);
                 console.log(sport);
+                
                 // Call smart contract
-                const tx = await oracle.requestGames("create", sport.toString(), expiryEpoch.toString());
+                const tx = await oracle.requestGames("create", sport.toString(), expiryEpoch.toString(), {
+                    gasLimit: 140000
+                  });
                 console.log(tx);
                 setLoadingSearch(true);
                 const txReceipt = await tx.wait();
@@ -81,6 +84,7 @@ const CreateGameForm = ({ onCloseForm, oracle, predictionMarket, updateGames, up
                 // Check if request has been fulfilled by chainlink
                 await waitFulfilled(oracle, reqId);
                 const result = await oracle.getGamesCreated(reqId);
+
                 console.log(result);
                 setMatches(result);
                 setLoadingSearch(false);

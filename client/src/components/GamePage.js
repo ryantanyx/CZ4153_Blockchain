@@ -93,7 +93,9 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
     const resolveWinner = async () => {
         try {
             // Call chain link smart contract to get winner 
-            const tx = await oracle.requestGames("resolve", gameInfo.sportId, gameInfo.expiryTime);
+            const tx = await oracle.requestGames("resolve", gameInfo.sportId, gameInfo.expiryTime, {
+                gasLimit: 140000
+              });
             console.log(tx);
             const txReceipt = await tx.wait();
             console.log(txReceipt);

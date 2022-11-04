@@ -9,17 +9,14 @@ module.exports = async function (deployer, network, accounts) {
         const tokenA = await ERC20Basic.deployed()
         await deployer.deploy(ERC20Basic, "Token B", "TKB");
         const tokenB = await ERC20Basic.deployed()
-        const payload = {
-            betTitle: "Test title",
-            expiryDate: 1668265200,
-            choiceA: "Side A",
-            choiceB: "Side B",
-            sportId: "11",
-            gameId: "123"
+        payload = {
+            betTile : "Test title",
+            expiryDate :  1668265200,
+            choiceA : "Side A",
+            choiceB : "Side B",
+            sportId : "11", 
+            gameId : "0"
         }
-        betTile = "Test title"
-        choiceA = "Side A"
-        choiceB = "Side B"
         console.log("Token A: " + tokenA.address + "\nToken B: " + tokenB.address)
         predictionGame = await deployer.deploy(PredictionGame, creator, tokenA.address, tokenB.address, payload)
         console.log("Deployed Prediction Game for testing...")
