@@ -177,7 +177,7 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                     </Grid>
                     <Grid container justifyContent="space-between">
                         <Typography>Expires: {getDateTimeString(gameInfo.expiryTime)}</Typography>
-                        <Typography>Total Pot: {gameInfo.totalPot} ETH</Typography>
+                        <Typography>Total Pot: {gameInfo.totalPot} Wei</Typography>
                     </Grid>
                 </Box>
                 <Grid container my={2} spacing={2}>

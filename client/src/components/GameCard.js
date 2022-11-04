@@ -74,7 +74,7 @@ const GameCard = ({ wallet, game, updateSnackbar, oracle }) => {
                         <Typography fontWeight={600} mr={1}>{gameInfo.choiceB}</Typography>
                     </Grid>
                 </Box>
-                <Typography mt={1}>Total Pot: {gameInfo.totalPot} ETH</Typography>
+                <Typography mt={1}>Total Pot: {gameInfo.totalPot} Wei</Typography>
             </CardContent>
             {gameInfo.liquidityInitialised ? 
                 <CardActions>
