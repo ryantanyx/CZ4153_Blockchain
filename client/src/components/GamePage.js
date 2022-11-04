@@ -212,7 +212,7 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                                         <Button disabled variant="contained" sx={{ width: "100%" }}>Resolve Winner</Button>
                                     :
                                         (gameInfo.winner === "") ?
-                                            <Button variant="contained" onClick={resolveWinner} sx={{ width: "100%" }}>Resolve Winner</Button>
+                                            <Button disabled={currentTime < (parseInt(gameInfo.expiryTime) + 2*60*60)} variant="contained" onClick={resolveWinner} sx={{ width: "100%" }}>Resolve Winner</Button>
                                         :
                                             <Button variant="contained" onClick={withdrawWinnings} sx={{ width: "100%" }}>Withdraw Winnings</Button>
                                 }
