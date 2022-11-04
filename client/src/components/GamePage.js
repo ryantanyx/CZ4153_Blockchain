@@ -110,6 +110,11 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                     break;
                 }
             }
+            // If game still null -> probably not resolved yet
+            if (game == null) {
+                triggerSnackbar("error", `Sorry! Cannot resolve winner yet! ${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}`);
+                return;
+            }
             const winner = (game.homeScore > game.awayScore) ? gameInfo.choiceA : ((game.homeScore < game.awayScore) ? gameInfo.choiceB : "_draw_");
             // Call prediction game smart contract to update winner
             const updateTx = await game.updateWinner(winner);
