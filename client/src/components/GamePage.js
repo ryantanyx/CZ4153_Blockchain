@@ -92,8 +92,13 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
     // Call smart contract to resolve the winner of the game
     const resolveWinner = async () => {
         try {
+            let gameIdArray = [String(gameInfo.gameId)];
             // Call chain link smart contract to get winner 
-            const tx = await oracle.requestGames("resolve", gameInfo.sportId, gameInfo.expiryTime);
+            const tx = await oracle.requestSpecificGames("resolve",
+                gameInfo.sportId,
+                String(gameInfo.expiryTime),
+                gameIdArray,
+                {gasLimit: 160000});
             console.log(tx);
             const txReceipt = await tx.wait();
             console.log(txReceipt);
@@ -102,20 +107,21 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
             // Check if request has been fulfilled by chainlink
             await waitFulfilled(oracle, reqId);
             const result = await oracle.getGamesResolved(reqId);
+            console.log(gameInfo.gameId);
             console.log(result);
-            let game = null;
-            for (let i = 0; i < result.length; i++) {
-                if (gameInfo.gameId === result[i].gameId) {
-                    game = result[i];
-                    break;
-                }
-            }
+            // let foundGame = null;
+            // for (let i = 0; i < result.length; i++) {
+            //     if (gameInfo.gameId === result[i].gameId) {
+            //         foundGame = result[i];
+            //         break;
+            //     }
+            // }
             // If game still null -> probably not resolved yet
-            if (game == null) {
-                triggerSnackbar("error", `Sorry! Cannot resolve winner yet! ${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}`);
-                return;
-            }
-            const winner = (game.homeScore > game.awayScore) ? gameInfo.choiceA : ((game.homeScore < game.awayScore) ? gameInfo.choiceB : "_draw_");
+            // if (foundGame == null) {
+            //     triggerSnackbar("error", `Sorry! Cannot resolve winner yet! ${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}`);
+            //     return;
+            // }
+            const winner = (result[0].homeScore > result[0].awayScore) ? gameInfo.choiceA : ((result[0].homeScore < result[0].awayScore) ? gameInfo.choiceB : "_draw_");
             // Call prediction game smart contract to update winner
             const updateTx = await game.updateWinner(winner);
             await updateTx.wait();
