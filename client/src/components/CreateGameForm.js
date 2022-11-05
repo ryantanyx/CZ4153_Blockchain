@@ -104,7 +104,7 @@ const CreateGameForm = ({ onCloseForm, oracle, predictionMarket, updateGames, up
                     expiryDate: parseInt(expiryTime),
                     choiceA: choiceA,
                     choiceB: choiceB,
-                    sportId: sport,
+                    sportId: sport.toString(),
                     gameId: gameId
                 }
                 // Call smart contract
