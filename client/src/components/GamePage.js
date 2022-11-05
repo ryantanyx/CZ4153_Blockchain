@@ -99,28 +99,16 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                 String(gameInfo.expiryTime),
                 gameIdArray,
                 {gasLimit: 160000});
-            console.log(tx);
             const txReceipt = await tx.wait();
-            console.log(txReceipt);
             const reqId = txReceipt.logs[0].topics[1];
-            console.log(reqId);
             // Check if request has been fulfilled by chainlink
             await waitFulfilled(oracle, reqId);
             const result = await oracle.getGamesResolved(reqId);
-            console.log(gameInfo.gameId);
-            console.log(result);
-            // let foundGame = null;
-            // for (let i = 0; i < result.length; i++) {
-            //     if (gameInfo.gameId === result[i].gameId) {
-            //         foundGame = result[i];
-            //         break;
-            //     }
-            // }
             // If game still null -> probably not resolved yet
-            // if (foundGame == null) {
-            //     triggerSnackbar("error", `Sorry! Cannot resolve winner yet! ${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}`);
-            //     return;
-            // }
+            if (result.length == 0) {
+                triggerSnackbar("error", `Sorry! Cannot resolve winner yet! ${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}${getEmoji(0x1F62D)}`);
+                return;
+            }
             const winner = (result[0].homeScore > result[0].awayScore) ? gameInfo.choiceA : ((result[0].homeScore < result[0].awayScore) ? gameInfo.choiceB : "_draw_");
             // Call prediction game smart contract to update winner
             const updateTx = await game.updateWinner(winner);

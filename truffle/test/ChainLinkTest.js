@@ -29,26 +29,7 @@ contract('ChainLinkAPIConsumer contract', (deployer, network, accounts) => {
 
   it('should send a request to ChainLink', async () => {
     const transaction = chainLink.requestGames("100000000000000000", "resolve", 11, 1665842400)
-    // const requestId = transaction.logs[0].args["requestId"]
-    // console.log("requestId: ", requestId)
       
     assert.notEqual(transaction, null, "transaction has not been sent out");
   });
-
-  // it('should fail to send a request to ChainLink due to insufficient LINK', async () => {
-    // var fn = chainLink.requestGames("10000000000000000", "resolve", "11", "1665842400");
-
-    // assert.throws(() => ChainLink.requestGames("10000000000000000", "resolve", "11", "1665842400"), EVM_INSUFFICIENT_LINK);
-    // expect(() => ChainLink.requestGames("10000000000000000", "resolve", "11", "1665842400")).to.throw(EVM_INSUFFICIENT_LINK);
-    // assert.notEqual(tx, null, "transaction has not been sent out");
-    // await expectRevert(
-    //   chainLink.requestGames("100000000000000000", "resolve", "11", "1665842400"),
-    //   EVM_INSUFFICIENT_LINK,
-    // );
-  //   await expectRevert.unspecified(
-  //     chainLink.requestGames("100000000000000000", "resolve", "11", "1665842400")
-  //   );
-  // });
-
-
 });

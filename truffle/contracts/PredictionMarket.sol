@@ -59,14 +59,8 @@ contract PredictionMarket is Ownable {
         // 2. Create new `PredictionGame` smart contract
         PredictionGame newPredictionGame = gameFactory.createGameContract(
             msg.sender,
-            // payload,
             address(TokenA),
             address(TokenB),
-            // payload.betTitle,
-            // payload.choiceA,
-            // payload.choiceB,
-            // payload.sportId,
-            // payload.gameId
             payload
         );
         address newPredictionGameAddr = address(newPredictionGame);

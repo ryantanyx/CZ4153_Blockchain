@@ -37,20 +37,21 @@ export const getGameInfo = async (game) => {
     const gameId = await game.gameId();
 
     const gameInfo = {
-        betTitle: betTitle,
-        choiceA: choiceA,
-        choiceB: choiceB,
-        totalPot: totalPot,
-        betA: betA,
-        betB: betB,
-        liquidityInitialised: liquidityInitialised,
-        creator: creator,
-        internalTokenA: internalTokenA,
-        internalTokenB: internalTokenB,
-        expiryTime: expiryTime,
-        winner: winner,
-        sportId: sportId,
-        gameId: gameId
+        betTitle,
+        choiceA,
+        choiceB,
+        totalPot,
+        betA,
+        betB,
+        liquidityInitialised,
+        creator,
+        internalTokenA,
+        internalTokenB,
+        expiryTime,
+        winner,
+        sportId,
+        gameId
     };
+    console.log(gameInfo)
     return gameInfo;
 }
