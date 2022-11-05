@@ -3,8 +3,6 @@ import { Container, Box, Grid } from '@mui/material';
 import GameCard from './GameCard';
 
 const GameList = ({ wallet, predictionGames, updateSnackbar, oracle }) => {
-    console.log(predictionGames);
-
     return (
         <Box sx={{ my: 5 }}>
             <Container fixed>

@@ -42,12 +42,6 @@ contract ChainLinkAPIConsumer is ChainlinkClient {
         fee = _fee;
     }
 
-
-    //  constructor() {
-    //     setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
-    //     setChainlinkOracle(0xB9756312523826A566e222a34793E414A81c88E1);
-    //     jobId = 0x3662303964333762323834663436353562623531306634393465646331313166;
-    // }
     /* ========== EXTERNAL FUNCTIONS ========== */
 
     function cancelRequest(

@@ -48,18 +48,9 @@ contract PredictionGame{
 
     constructor(
         address _creator,
-        // uint256 _expiryTime,
         address _TokenAAddress,
         address _TokenBAddress,
-        // string memory _betTitle,
-        // string memory _choiceA,     // Home Team
-        // string memory _choiceB,     // Away Team,
-        // string memory _sportId,
-        // string memory _gameId,
         SharedStructs.Payload memory _payload
-        // string memory _reqId,
-        // address _chainLinkAddr,
-        // uint _gameTypeId
     ){
         creator = _creator;
         status = PredictionGameStatus.OPEN;
@@ -104,29 +95,6 @@ contract PredictionGame{
         _;
     }
 
-    /**
-     * Making sure that the function has only access to the winner
-     */
-    // modifier onlyWinner() {
-    //     require(msg.sender == winner, "You are not the winner of this game!");
-    //     _;
-    // }
-
-    /**
-     * Print choices in game
-     */
-    // function getChoices()
-    //     public
-    //     view
-    //     returns (
-    //         string[] memory entries
-    //     )
-    // {
-    //     return (
-    //         choices
-    //     );
-    // }
-
     function provideLiquidity()
         external payable
         onlyExpiredGame(false)
@@ -145,16 +113,6 @@ contract PredictionGame{
         excess = SafeMath.sub(address(this).balance, totalPot);
     }
 
-    // function seeBalance()
-    //     external
-    //     view
-    //     returns (
-    //         uint
-    //     )
-    // {
-    //     return address(this).balance;
-    // }
-
     // Pass in side of which Internal Tokens you wish to query
     function seeInternalTokens(Side side)
         external
@@ -165,12 +123,6 @@ contract PredictionGame{
     {
         return internalToken.seeInternalTokens(side);
     }
-
-    // function testDraw()
-    //     external
-    //     {
-    //         winner = '_draw_';
-    //     }
     
     function resolveDraw(address sender)
         internal
@@ -217,11 +169,6 @@ contract PredictionGame{
                 winTokensTotal = externalTokens[Side.NO];
             }
 
-            // calc % winnings
-            // let a = amt of winning tokens sender holds, b = amt of total winning tokens issued, c = totalPot
-            // proportion of winning share D = a / b
-            // proportion of pot = E = D * c
-
             uint256 potShare = SafeMath.div(SafeMath.mul(SafeMath.div(SafeMath.mul(winTokens, 10**18), winTokensTotal), totalPot), 10**18);
 
             payable(msg.sender).transfer(potShare);
@@ -242,45 +189,6 @@ contract PredictionGame{
         
         excess = 0; //signal lp has already withdrawn
     }
-
-    /**
-     * Get Betting Game all public info
-     */
-    // function getBettingGameInfo()
-    //     public
-    //     view
-    //     returns (
-    //         address,
-    //         // address,
-    //         // Side,
-    //         PredictionGameStatus,
-    //         uint256
-    //         // Side
-    //         // bool
-    //         // uint256,
-    //         // uint256
-    //     )
-    // {
-    //     return (
-    //         creator,
-    //         // challenger,
-    //         // sides,
-    //         status,
-    //         expiryTime
-    //         // result.winner
-    //         // isWithdrawn
-    //         // playerPredictionRecordRegistry[creator], //supposed to return 
-    //         // playerPredictionRecordRegistry[challenger]
-    //     );
-    // }
-
-
-    /**
-     *  Cancel the created Betting Game
-     */
-    // function cancel() public onlyCreator(true) {
-    //     status = PredictionGameStatus.CLOSED;
-    // }
 
     /**
      * Allow player to place a bet on the game

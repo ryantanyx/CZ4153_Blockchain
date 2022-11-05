@@ -24,21 +24,21 @@ module.exports = async callback => {
 
 };
 
-// module.exports = async callback => {
-//     const ins = await ChainLinkAPIConsumer.at('0xFA3EaB09308b3397AA12eaA92bcE768ADb505Ed9')
-//     console.log("Getting contract address: ", ins.address);
+module.exports = async callback => {
+    const ins = await ChainLinkAPIConsumer.at('0xFA3EaB09308b3397AA12eaA92bcE768ADb505Ed9')
+    console.log("Getting contract address: ", ins.address);
 
-//     tx = await ins.requestGames("100000000000000000", "create", "11", "1666447200")
-//     console.log("Getting transection details address: ", tx);
-//     reqId = tx.receipt.logs[0].args[0]
+    tx = await ins.requestGames("100000000000000000", "create", "11", "1666447200")
+    console.log("Getting transection details address: ", tx);
+    reqId = tx.receipt.logs[0].args[0]
 
-//     console.log("Waiting for request to be fulfilled for reqId: " + reqId)
-//     await new Promise(r => setTimeout(r, 60000));
-//     console.log("Waiting for request to be fulfilled...")
-//     result = await ins.getGamesCreated(reqId)
-//     console.log("Getting request result address: ", result);
+    console.log("Waiting for request to be fulfilled for reqId: " + reqId)
+    await new Promise(r => setTimeout(r, 60000));
+    console.log("Waiting for request to be fulfilled...")
+    result = await ins.getGamesCreated(reqId)
+    console.log("Getting request result address: ", result);
 
 
-//     callback(console.log("Function call completed..."));
+    callback(console.log("Function call completed..."));
 
-// };
+};
