@@ -243,7 +243,7 @@ const GamePage = ({ onClosePage, game, gameInfo, wallet, updateGameInfo, trigger
                                 <Button color={getButtonColor(true)} onClick={() => selectChoice(true)}>{gameInfo.choiceA}</Button>
                                 <Button color={getButtonColor(false)} onClick={() => selectChoice(false)}>{gameInfo.choiceB}</Button>
                             </ButtonGroup>
-                            <Typography variant="h6" align="left" sx={{ width: '75%' }}>ETH Amount</Typography>
+                            <Typography variant="h6" align="left" sx={{ width: '75%' }}>Wei Amount</Typography>
                             <TextField 
                                 type="number"
                                 size="small"
