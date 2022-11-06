@@ -10,7 +10,7 @@ module.exports = async function (deployer, network, accounts) {
         await deployer.deploy(ERC20Basic, "Token B", "TKB");
         const tokenB = await ERC20Basic.deployed()
         payload = {
-            betTile : "Test title",
+            betTitle : "Test title",
             expiryDate :  1668265200,
             choiceA : "Side A",
             choiceB : "Side B",
