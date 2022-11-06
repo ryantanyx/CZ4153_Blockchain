@@ -1,5 +1,7 @@
 # CZ4153 Blockchain Project
 
+Github link for our project: https://github.com/ryantanyx/CZ4153_Blockchain
+
 ## Setting up
 install dependencies in both folders
 
