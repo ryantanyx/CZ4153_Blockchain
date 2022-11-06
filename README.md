@@ -3,7 +3,7 @@
 Github link for our project: https://github.com/ryantanyx/CZ4153_Blockchain
 
 ## Setting up
-install dependencies in both folders
+Install dependencies in both folders
 
 ```sh
 $ cd client
@@ -13,6 +13,12 @@ $ npm install
 ```sh
 $ cd truffle
 $ npm install
+```
+
+Compiling contracts for front end
+```sh
+$ cd truffle
+$ truffle compile
 ```
 
 ## Installing Ganache UI
@@ -33,12 +39,6 @@ $ npm install
 	- RPC URL --> given in Ganache UI
 	- Chain ID --> 1337
 	- Currency symbol: ETH
-
-## Compiling contracts for front end
-```sh
-$ cd truffle
-$ truffle compile
-```
 
 ## Running scripts your contracts
 
