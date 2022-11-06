@@ -32,6 +32,12 @@ $ npm install
 	- Chain ID --> 1337
 	- Currency symbol: ETH
 
+## Compiling contracts for front end
+```sh
+$ cd truffle
+$ truffle compile
+```
+
 ## Running scripts your contracts
 
 1. Deploying your smart contracts
