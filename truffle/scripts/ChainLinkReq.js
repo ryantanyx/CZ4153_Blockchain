@@ -25,10 +25,10 @@ module.exports = async callback => {
 };
 
 module.exports = async callback => {
-    const ins = await ChainLinkAPIConsumer.at('0xFA3EaB09308b3397AA12eaA92bcE768ADb505Ed9')
+    const ins = await ChainLinkAPIConsumer.at('0xdD5e53290C3f2aD293E6C0D51117de25d72A5Ebb')
     console.log("Getting contract address: ", ins.address);
 
-    tx = await ins.requestGames("100000000000000000", "create", "11", "1666447200")
+    tx = await ins.requestGames("create", "11", "1666447200")
     console.log("Getting transection details address: ", tx);
     reqId = tx.receipt.logs[0].args[0]
 
