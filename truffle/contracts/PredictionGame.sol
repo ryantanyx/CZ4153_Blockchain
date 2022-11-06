@@ -171,9 +171,8 @@ contract PredictionGame{
 
             uint256 potShare = SafeMath.div(SafeMath.mul(SafeMath.div(SafeMath.mul(winTokens, 10**18), winTokensTotal), totalPot), 10**18);
 
-            payable(msg.sender).transfer(potShare);
-
             betsOfAllPlayers[msg.sender][sidesMap[winner]] = 0;  //signal player has already withdrawn
+            payable(msg.sender).transfer(potShare);
         }
     }
 
@@ -185,9 +184,9 @@ contract PredictionGame{
         require(creator == msg.sender, "You are not the creator of this game!");
         require(excess > 0, "Liquidity provider's share has already been withdrawn!");
 
-        payable(msg.sender).transfer(excess);
-        
+        uint256 topay = excess;
         excess = 0; //signal lp has already withdrawn
+        payable(msg.sender).transfer(topay);
     }
 
     /**
